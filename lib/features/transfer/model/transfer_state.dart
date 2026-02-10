@@ -1,31 +1,42 @@
-/// Transfer Step Enum
-enum TransferStep { menu, input, review, success }
+import 'package:lign_financial/features/transfer/model/recipient_model.dart';
 
-/// Transfer State
-class TransferState {
+/// State for the transfer confirmation flow.
+class TransferConfirmationState {
+  final RecipientModel? recipient;
+  final double amount;
+  final String pin;
+  final bool isExistingRecipient;
   final bool isLoading;
   final String? errorMessage;
-  final TransferStep currentStep;
-  final String selectedType;
+  final bool isSuccess;
 
-  const TransferState({
+  const TransferConfirmationState({
+    this.recipient,
+    this.amount = 0,
+    this.pin = '',
+    this.isExistingRecipient = false,
     this.isLoading = false,
     this.errorMessage,
-    this.currentStep = TransferStep.menu,
-    this.selectedType = '',
+    this.isSuccess = false,
   });
 
-  TransferState copyWith({
+  TransferConfirmationState copyWith({
+    RecipientModel? recipient,
+    double? amount,
+    String? pin,
+    bool? isExistingRecipient,
     bool? isLoading,
     String? errorMessage,
-    TransferStep? currentStep,
-    String? selectedType,
+    bool? isSuccess,
   }) {
-    return TransferState(
+    return TransferConfirmationState(
+      recipient: recipient ?? this.recipient,
+      amount: amount ?? this.amount,
+      pin: pin ?? this.pin,
+      isExistingRecipient: isExistingRecipient ?? this.isExistingRecipient,
       isLoading: isLoading ?? this.isLoading,
       errorMessage: errorMessage,
-      currentStep: currentStep ?? this.currentStep,
-      selectedType: selectedType ?? this.selectedType,
+      isSuccess: isSuccess ?? this.isSuccess,
     );
   }
 }

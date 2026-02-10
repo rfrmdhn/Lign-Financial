@@ -9,7 +9,13 @@ import 'package:lign_financial/features/qris/view/qris_page.dart';
 import 'package:lign_financial/features/activity/view/activity_page.dart';
 import 'package:lign_financial/features/profile/view/profile_page.dart';
 import 'package:lign_financial/features/shared/view/scaffold_with_navigation.dart';
-import 'package:lign_financial/features/transfer/view/transfer_page.dart';
+import 'package:lign_financial/features/transfer/view/transfer_recipient_list_page.dart';
+import 'package:lign_financial/features/transfer/view/transfer_new_recipient_form_page.dart';
+import 'package:lign_financial/features/transfer/view/bank_selection_page.dart';
+import 'package:lign_financial/features/transfer/view/transfer_confirmation_page.dart';
+import 'package:lign_financial/features/transfer/view/transfer_success_page.dart';
+import 'package:lign_financial/features/transfer/view/save_new_recipient_page.dart';
+import 'package:lign_financial/features/transfer/model/recipient_model.dart';
 import 'package:lign_financial/features/budget/view/budget_page.dart';
 import 'package:lign_financial/features/notifications/view/notifications_page.dart';
 import 'package:lign_financial/features/shared/view/splash_page.dart';
@@ -31,10 +37,59 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         path: '/login',
         builder: (context, state) => const LoginPage(),
       ),
+      // Transfer — Recipient-First Flow
       GoRoute(
         path: '/transfer',
         parentNavigatorKey: _rootNavigatorKey,
-        builder: (context, state) => const TransferScreen(),
+        builder: (context, state) => const TransferRecipientListPage(),
+      ),
+      GoRoute(
+        path: '/transfer/new',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const TransferNewRecipientFormPage(),
+      ),
+      GoRoute(
+        path: '/transfer/banks',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const BankSelectionPage(),
+      ),
+      GoRoute(
+        path: '/transfer/confirm',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>;
+          return TransferConfirmationPage(
+            recipient: extra['recipient'] as RecipientModel,
+            isExistingRecipient: extra['isExisting'] as bool,
+          );
+        },
+      ),
+      GoRoute(
+        path: '/transfer/success',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>;
+          return TransferSuccessPage(
+            bankName: extra['bankName'] as String,
+            accountNumber: extra['accountNumber'] as String,
+            accountHolderName: extra['accountHolderName'] as String,
+            amount: extra['amount'] as double,
+            isExistingRecipient: extra['isExisting'] as bool,
+          );
+        },
+      ),
+      GoRoute(
+        path: '/transfer/save-recipient',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>;
+          return SaveNewRecipientPage(
+            bankName: extra['bankName'] as String,
+            bankCode: extra['bankCode'] as String,
+            accountNumber: extra['accountNumber'] as String,
+            accountHolderName: extra['accountHolderName'] as String,
+          );
+        },
       ),
       GoRoute(
         path: '/budget',
