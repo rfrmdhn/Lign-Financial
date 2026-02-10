@@ -2,7 +2,6 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:lign_financial/features/auth/viewmodel/auth_viewmodel.dart';
 import 'package:lign_financial/features/login/view/login_page.dart';
 import 'package:lign_financial/features/home/view/home_page.dart';
 import 'package:lign_financial/features/account/view/account_page.dart';

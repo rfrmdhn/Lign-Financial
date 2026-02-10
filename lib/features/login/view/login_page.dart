@@ -60,25 +60,11 @@ class _LoginPageState extends ConsumerState<LoginPage> {
             children: [
               // Logo Icon
               Center(
-                child: Container(
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    color: LignColors.electricLime,
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: LignColors.electricLime.withValues(alpha: 0.4),
-                        blurRadius: 20,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
-                  ),
-                  child: const Icon(
-                    Icons.account_balance_wallet,
-                    size: 40,
-                    color: LignColors.textPrimary,
-                  ),
+                child: Image.asset(
+                  'assets/icon/Logo-1.png',
+                  width: 120,
+                  height: 120,
+                  fit: BoxFit.contain,
                 ),
               ),
               const SizedBox(height: 24),
