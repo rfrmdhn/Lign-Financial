@@ -13,7 +13,7 @@ class AppStrings {
   
   // Home
   static const String financeMode = 'Finance Mode';
-  static const String employeeMode = 'Karyawan Mode';
+  static const String employeeMode = 'Employee Mode';
   static const String switchMode = 'Switch';
   static const String greeting = 'Hi, %s'; // %s for name
   

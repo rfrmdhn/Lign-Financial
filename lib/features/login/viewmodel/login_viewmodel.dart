@@ -1,33 +1,42 @@
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../model/login_state.dart';
 
+/// Login ViewModel
+/// Manages state and handles user interaction.
+/// Uses Riverpod StateNotifier to expose state.
 class LoginViewModel extends Notifier<LoginState> {
   @override
   LoginState build() {
     return const LoginState();
   }
 
-  Future<void> login(String username, String password) async {
+  void onUsernameChanged(String value) {
+    state = state.copyWith(username: value);
+  }
+
+  void onPasswordChanged(String value) {
+    state = state.copyWith(password: value);
+  }
+
+  Future<void> login() async {
     state = state.copyWith(isLoading: true, errorMessage: null);
 
     try {
-      // Simulate API call
+      // Simulate API Call (Repository call would go here)
       await Future.delayed(const Duration(seconds: 2));
 
-      if (username == 'user' && password == 'password') {
-        state = state.copyWith(isLoading: false, isAuthenticated: true);
+      if (state.username == 'admin' && state.password == 'password') {
+         state = state.copyWith(isLoading: false, isAuthenticated: true);
       } else {
-        state = state.copyWith(isLoading: false, errorMessage: 'Invalid credentials');
+         state = state.copyWith(isLoading: false, errorMessage: 'Invalid credentials');
       }
     } catch (e) {
-      state = state.copyWith(isLoading: false, errorMessage: 'An error occurred');
+      state = state.copyWith(isLoading: false, errorMessage: e.toString());
     }
-  }
-
-  void logout() {
-    state = const LoginState();
   }
 }
 
-final loginViewModelProvider = NotifierProvider<LoginViewModel, LoginState>(LoginViewModel.new);
+/// Provider for the LoginViewModel
+final loginViewModelProvider = NotifierProvider<LoginViewModel, LoginState>(() {
+  return LoginViewModel();
+});

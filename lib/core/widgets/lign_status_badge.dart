@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lign_financial/core/themes/app_colors.dart';
-import 'package:lign_financial/features/home/domain/transaction.dart';
+import 'package:lign_financial/features/home/model/transaction.dart';
 
 /// Shared status badge used across transaction lists.
 /// Displays a colored pill indicating the transaction status.

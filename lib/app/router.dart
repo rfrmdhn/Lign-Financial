@@ -2,22 +2,22 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:lign_financial/features/auth/presentation/auth_controller.dart';
-import 'package:lign_financial/features/auth/presentation/login_screen.dart';
-import 'package:lign_financial/features/home/presentation/home_screen.dart';
-import 'package:lign_financial/features/account/presentation/account_screen.dart';
-import 'package:lign_financial/features/qris/presentation/qris_screen.dart';
-import 'package:lign_financial/features/activity/presentation/activity_screen.dart';
-import 'package:lign_financial/features/profile/presentation/profile_screen.dart';
-import 'package:lign_financial/features/shared/scaffold_with_navigation.dart';
-import 'package:lign_financial/features/transfer/presentation/transfer_screen.dart';
-import 'package:lign_financial/features/budget/presentation/budget_screen.dart';
-import 'package:lign_financial/features/notifications/presentation/notifications_screen.dart';
+import 'package:lign_financial/features/auth/viewmodel/auth_viewmodel.dart';
+import 'package:lign_financial/features/login/view/login_page.dart';
+import 'package:lign_financial/features/home/view/home_page.dart';
+import 'package:lign_financial/features/account/view/account_page.dart';
+import 'package:lign_financial/features/qris/view/qris_page.dart';
+import 'package:lign_financial/features/activity/view/activity_page.dart';
+import 'package:lign_financial/features/profile/view/profile_page.dart';
+import 'package:lign_financial/features/shared/view/scaffold_with_navigation.dart';
+import 'package:lign_financial/features/transfer/view/transfer_page.dart';
+import 'package:lign_financial/features/budget/view/budget_page.dart';
+import 'package:lign_financial/features/notifications/view/notifications_page.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
 final goRouterProvider = Provider<GoRouter>((ref) {
-  final authState = ref.watch(authControllerProvider);
+  final authState = ref.watch(authViewModelProvider);
 
   return GoRouter(
     navigatorKey: _rootNavigatorKey,
@@ -33,7 +33,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
     routes: [
       GoRoute(
         path: '/login',
-        builder: (context, state) => const LoginScreen(),
+        builder: (context, state) => const LoginPage(),
       ),
       GoRoute(
         path: '/transfer',
