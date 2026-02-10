@@ -30,7 +30,6 @@ class TransferConfirmationPage extends ConsumerStatefulWidget {
 class _TransferConfirmationPageState
     extends ConsumerState<TransferConfirmationPage> {
   final _amountController = TextEditingController();
-  final _pinController = TextEditingController();
 
   @override
   void initState() {
@@ -46,14 +45,51 @@ class _TransferConfirmationPageState
   @override
   void dispose() {
     _amountController.dispose();
-    _pinController.dispose();
     super.dispose();
+  }
+
+  void _onTransferTap() {
+    final amount = double.tryParse(_amountController.text) ?? 0;
+    if (amount <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter a valid amount')),
+      );
+      return;
+    }
+
+    final vm = ref.read(transferConfirmationProvider.notifier);
+    vm.setAmount(amount);
+
+    // Show the PIN dial pad
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      isDismissible: true,
+      builder: (_) => _PinDialPad(
+        onComplete: (pin) async {
+          Navigator.of(context).pop(); // close bottom sheet
+          vm.setPin(pin);
+          final success = await vm.processTransfer();
+          if (success && mounted) {
+            final r = widget.recipient;
+            final state = ref.read(transferConfirmationProvider);
+            context.pushReplacement('/transfer/success', extra: {
+              'bankName': r.bankName,
+              'accountNumber': r.accountNumber,
+              'accountHolderName': r.accountHolderName,
+              'amount': state.amount,
+              'isExisting': widget.isExistingRecipient,
+            });
+          }
+        },
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(transferConfirmationProvider);
-    final vm = ref.read(transferConfirmationProvider.notifier);
 
     ref.listen(transferConfirmationProvider, (prev, next) {
       if (next.errorMessage != null &&
@@ -74,7 +110,7 @@ class _TransferConfirmationPageState
         backgroundColor: LignColors.primaryBackground,
         foregroundColor: LignColors.textPrimary,
       ),
-      body: SingleChildScrollView(
+      body: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -135,8 +171,7 @@ class _TransferConfirmationPageState
                 ),
               ),
               onChanged: (v) {
-                final val = double.tryParse(v) ?? 0;
-                vm.setAmount(val);
+                setState(() {}); // refresh preview
               },
             ),
 
@@ -154,39 +189,212 @@ class _TransferConfirmationPageState
                 ),
               ),
 
-            const SizedBox(height: 20),
+            const Spacer(),
 
-            // PIN input
-            LignTextInput(
-              label: 'Transaction PIN',
-              controller: _pinController,
-              hintText: '6-digit PIN',
-              keyboardType: TextInputType.number,
-              obscureText: true,
-              onChanged: (v) => vm.setPin(v),
-            ),
-
-            const SizedBox(height: 36),
-
-            // Transfer button
+            // Transfer button → opens PIN dial pad
             LignButton(
               text: 'Transfer',
               isLoading: state.isLoading,
-              onPressed: () async {
-                final success = await vm.processTransfer();
-                if (success && context.mounted) {
-                  final r = widget.recipient;
-                  context.pushReplacement('/transfer/success', extra: {
-                    'bankName': r.bankName,
-                    'accountNumber': r.accountNumber,
-                    'accountHolderName': r.accountHolderName,
-                    'amount': state.amount,
-                    'isExisting': widget.isExistingRecipient,
-                  });
-                }
-              },
+              onPressed: _onTransferTap,
+            ),
+
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─── PIN Dial Pad Bottom Sheet ───────────────────────────────────────────────
+
+class _PinDialPad extends StatefulWidget {
+  final void Function(String pin) onComplete;
+
+  const _PinDialPad({required this.onComplete});
+
+  @override
+  State<_PinDialPad> createState() => _PinDialPadState();
+}
+
+class _PinDialPadState extends State<_PinDialPad> {
+  String _pin = '';
+  static const int _pinLength = 6;
+
+  void _onDigit(String digit) {
+    if (_pin.length >= _pinLength) return;
+    setState(() => _pin += digit);
+
+    if (_pin.length == _pinLength) {
+      // Small delay so user sees the last dot fill
+      Future.delayed(const Duration(milliseconds: 250), () {
+        widget.onComplete(_pin);
+      });
+    }
+  }
+
+  void _onBackspace() {
+    if (_pin.isEmpty) return;
+    setState(() => _pin = _pin.substring(0, _pin.length - 1));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: LignColors.primaryBackground,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 40),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Drag handle
+          Container(
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: LignColors.border,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          // Title
+          Text(
+            'Enter Transaction PIN',
+            style: GoogleFonts.inter(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: LignColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Enter your 6-digit PIN to confirm',
+            style: GoogleFonts.inter(
+              fontSize: 13,
+              color: LignColors.textSecondary,
+            ),
+          ),
+
+          const SizedBox(height: 28),
+
+          // PIN dots
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(_pinLength, (i) {
+              final filled = i < _pin.length;
+              return Container(
+                margin: const EdgeInsets.symmetric(horizontal: 8),
+                width: 18,
+                height: 18,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: filled ? LignColors.textPrimary : Colors.transparent,
+                  border: Border.all(
+                    color: filled ? LignColors.textPrimary : LignColors.border,
+                    width: 2,
+                  ),
+                ),
+              );
+            }),
+          ),
+
+          const SizedBox(height: 36),
+
+          // Number grid: 1-9, then [empty, 0, backspace]
+          _buildNumberGrid(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNumberGrid() {
+    return Column(
+      children: [
+        // Row 1: 1, 2, 3
+        _buildRow(['1', '2', '3']),
+        const SizedBox(height: 12),
+        // Row 2: 4, 5, 6
+        _buildRow(['4', '5', '6']),
+        const SizedBox(height: 12),
+        // Row 3: 7, 8, 9
+        _buildRow(['7', '8', '9']),
+        const SizedBox(height: 12),
+        // Row 4: empty, 0, backspace
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            // Empty spacer
+            SizedBox(
+              width: 80,
+              height: 72,
+              child: Container(),
+            ),
+            // 0
+            _DialButton(
+              label: '0',
+              onTap: () => _onDigit('0'),
+            ),
+            // Backspace
+            SizedBox(
+              width: 80,
+              height: 72,
+              child: InkWell(
+                onTap: _onBackspace,
+                borderRadius: BorderRadius.circular(16),
+                child: const Center(
+                  child: Icon(
+                    Icons.backspace_outlined,
+                    size: 26,
+                    color: LignColors.textPrimary,
+                  ),
+                ),
+              ),
             ),
           ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRow(List<String> digits) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+      children: digits
+          .map((d) => _DialButton(
+                label: d,
+                onTap: () => _onDigit(d),
+              ))
+          .toList(),
+    );
+  }
+}
+
+class _DialButton extends StatelessWidget {
+  final String label;
+  final VoidCallback onTap;
+
+  const _DialButton({required this.label, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 80,
+      height: 72,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Center(
+          child: Text(
+            label,
+            style: GoogleFonts.inter(
+              fontSize: 32,
+              fontWeight: FontWeight.w500,
+              color: LignColors.textPrimary,
+            ),
+          ),
         ),
       ),
     );
