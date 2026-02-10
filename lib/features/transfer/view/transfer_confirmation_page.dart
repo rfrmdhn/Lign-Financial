@@ -4,10 +4,10 @@ import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'package:lign_financial/core/themes/app_colors.dart';
-import 'package:lign_financial/core/utils/currency_formatter.dart';
+
 import 'package:lign_financial/core/widgets/lign_button.dart';
 import 'package:lign_financial/core/widgets/lign_card.dart';
-import 'package:lign_financial/core/widgets/lign_text_input.dart';
+
 import 'package:lign_financial/features/transfer/model/recipient_model.dart';
 import 'package:lign_financial/features/transfer/viewmodel/transfer_confirmation_vm.dart';
 
@@ -30,6 +30,22 @@ class TransferConfirmationPage extends ConsumerStatefulWidget {
 class _TransferConfirmationPageState
     extends ConsumerState<TransferConfirmationPage> {
   final _amountController = TextEditingController();
+  final _amountFocusNode = FocusNode();
+
+  /// Formats raw digits into dot-separated groups, e.g. "1500000" → "1.500.000".
+  String get _formattedAmount {
+    final raw = _amountController.text;
+    if (raw.isEmpty) return '0';
+    final number = int.tryParse(raw);
+    if (number == null) return raw;
+    final chars = number.toString().split('');
+    final buffer = StringBuffer();
+    for (var i = 0; i < chars.length; i++) {
+      if (i > 0 && (chars.length - i) % 3 == 0) buffer.write('.');
+      buffer.write(chars[i]);
+    }
+    return buffer.toString();
+  }
 
   @override
   void initState() {
@@ -45,6 +61,7 @@ class _TransferConfirmationPageState
   @override
   void dispose() {
     _amountController.dispose();
+    _amountFocusNode.dispose();
     super.dispose();
   }
 
@@ -155,39 +172,104 @@ class _TransferConfirmationPageState
               ),
             ),
 
-            const SizedBox(height: 24),
+            const SizedBox(height: 32),
 
-            // Amount input
-            LignTextInput(
-              label: 'Transfer Amount',
-              controller: _amountController,
-              hintText: '0',
-              keyboardType: TextInputType.number,
-              prefixIcon: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Text(
-                  'Rp',
-                  style: GoogleFonts.inter(fontWeight: FontWeight.bold),
-                ),
-              ),
-              onChanged: (v) {
-                setState(() {}); // refresh preview
-              },
-            ),
-
-            // Show formatted amount preview
-            if (_amountController.text.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: Text(
-                  CurrencyFormatter.format(
-                      double.tryParse(_amountController.text) ?? 0),
-                  style: GoogleFonts.inter(
-                    fontSize: 12,
-                    color: LignColors.textSecondary,
+            // Hero amount display
+            GestureDetector(
+              onTap: () => _amountFocusNode.requestFocus(),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 28),
+                decoration: BoxDecoration(
+                  color: LignColors.primaryBackground,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: _amountFocusNode.hasFocus
+                        ? LignColors.electricLime
+                        : LignColors.border,
                   ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF0F172A).withValues(alpha: 0.04),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  children: [
+                    Text(
+                      'Transfer Amount',
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: LignColors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.baseline,
+                      textBaseline: TextBaseline.alphabetic,
+                      children: [
+                        Text(
+                          'Rp',
+                          style: GoogleFonts.inter(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w600,
+                            color: LignColors.textSecondary,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          _formattedAmount,
+                          style: GoogleFonts.outfit(
+                            fontSize: 40,
+                            fontWeight: FontWeight.bold,
+                            color: _amountController.text.isEmpty
+                                ? LignColors.textDisabled
+                                : LignColors.textPrimary,
+                            letterSpacing: 1.2,
+                          ),
+                        ),
+                      ],
+                    ),
+                    // Hidden text field for keyboard input
+                    SizedBox(
+                      height: 0,
+                      child: TextField(
+                        controller: _amountController,
+                        focusNode: _amountFocusNode,
+                        keyboardType: TextInputType.number,
+                        style: const TextStyle(
+                          color: Colors.transparent,
+                          height: 0.01,
+                          fontSize: 1,
+                        ),
+                        cursorColor: Colors.transparent,
+                        decoration: const InputDecoration(
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.zero,
+                          isDense: true,
+                        ),
+                        onChanged: (_) => setState(() {}),
+                      ),
+                    ),
+                    if (_amountController.text.isEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: Text(
+                          'Tap to enter amount',
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            color: LignColors.textDisabled,
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
               ),
+            ),
 
             const Spacer(),
 
