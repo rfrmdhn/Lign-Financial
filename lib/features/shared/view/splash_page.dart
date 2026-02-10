@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:google_fonts/google_fonts.dart';
+
 import 'package:lign_financial/core/themes/app_colors.dart';
 import 'package:lign_financial/features/auth/viewmodel/auth_viewmodel.dart';
 
@@ -46,17 +46,15 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(
-              'Lign',
-              style: GoogleFonts.outfit(
-                fontSize: 48,
-                fontWeight: FontWeight.bold,
-                color: LignColors.electricLime,
-              ),
+            Image.asset(
+              'assets/icon/Logo-1.png',
+              width: 160,
+              height: 160,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 32),
             const CircularProgressIndicator(
               valueColor: AlwaysStoppedAnimation<Color>(LignColors.electricLime),
+              strokeWidth: 2.5,
             ),
           ],
         ),

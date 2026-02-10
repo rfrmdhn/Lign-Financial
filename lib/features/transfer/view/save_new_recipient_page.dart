@@ -127,38 +127,98 @@ class _SaveNewRecipientPageState extends ConsumerState<SaveNewRecipientPage> {
                   showDialog(
                     context: context,
                     barrierDismissible: false,
-                    builder: (_) => AlertDialog(
+                    barrierColor: Colors.black54,
+                    builder: (_) => Dialog(
+                      backgroundColor: LignColors.primaryBackground,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(24),
                       ),
-                      title: Row(
-                        children: [
-                          const Icon(Icons.check_circle,
-                              color: LignColors.electricLime),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Saved!',
-                            style:
-                                GoogleFonts.inter(fontWeight: FontWeight.bold),
-                          ),
-                        ],
-                      ),
-                      content: Text(
-                        'Recipient "${_aliasController.text}" has been saved.',
-                        style: GoogleFonts.inter(),
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => context.go('/home'),
-                          child: Text(
-                            'Back to Home',
-                            style: GoogleFonts.inter(
-                              fontWeight: FontWeight.w600,
-                              color: LignColors.textPrimary,
+                      insetPadding: const EdgeInsets.symmetric(
+                          horizontal: 32, vertical: 24),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 28, vertical: 36),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // Success icon
+                            Container(
+                              width: 72,
+                              height: 72,
+                              decoration: BoxDecoration(
+                                color: LignColors.electricLime
+                                    .withValues(alpha: 0.12),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.check_circle_rounded,
+                                size: 44,
+                                color: LignColors.electricLime,
+                              ),
                             ),
-                          ),
+                            const SizedBox(height: 20),
+
+                            // Title
+                            Text(
+                              'Recipient Saved!',
+                              style: GoogleFonts.inter(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: LignColors.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+
+                            // Message
+                            RichText(
+                              textAlign: TextAlign.center,
+                              text: TextSpan(
+                                style: GoogleFonts.inter(
+                                  fontSize: 14,
+                                  color: LignColors.textSecondary,
+                                  height: 1.5,
+                                ),
+                                children: [
+                                  const TextSpan(text: 'You can now quickly transfer to '),
+                                  TextSpan(
+                                    text: _aliasController.text,
+                                    style: GoogleFonts.inter(
+                                      fontWeight: FontWeight.w700,
+                                      color: LignColors.textPrimary,
+                                    ),
+                                  ),
+                                  const TextSpan(text: ' from your saved recipients.'),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 28),
+
+                            // Button
+                            SizedBox(
+                              width: double.infinity,
+                              height: 48,
+                              child: ElevatedButton(
+                                onPressed: () => context.go('/home'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: LignColors.textPrimary,
+                                  foregroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                  elevation: 0,
+                                ),
+                                child: Text(
+                                  'Back to Home',
+                                  style: GoogleFonts.inter(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 15,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
+                      ),
                     ),
                   );
                 }
