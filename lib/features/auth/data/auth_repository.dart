@@ -1,13 +1,13 @@
-enum UserRole { employee, finance, founder }
+enum AppMode { finance, employee }
 
 class User {
   final String id;
   final String name;
-  final UserRole role;
+  final String email;
 
   const User({
     required this.id,
     required this.name,
-    required this.role,
+    required this.email,
   });
 }
