@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:lign_financial/core/design_system/colors.dart';
+import 'package:lign_financial/core/themes/app_colors.dart';
 
 class LignTextInput extends StatelessWidget {
   final String label;

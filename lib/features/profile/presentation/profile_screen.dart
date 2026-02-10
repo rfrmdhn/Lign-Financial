@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import 'package:lign_financial/core/design_system/colors.dart';
+import 'package:lign_financial/core/themes/app_colors.dart';
 import 'package:lign_financial/core/widgets/lign_button.dart';
 import 'package:lign_financial/features/auth/domain/app_mode.dart';
 import 'package:lign_financial/features/auth/presentation/auth_controller.dart';

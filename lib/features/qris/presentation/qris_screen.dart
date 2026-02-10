@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import 'package:lign_financial/core/design_system/colors.dart';
+import 'package:lign_financial/core/themes/app_colors.dart';
 import 'package:lign_financial/core/widgets/lign_button.dart';
 import 'package:lign_financial/core/widgets/lign_text_input.dart';
 import 'package:lign_financial/core/utils/currency_formatter.dart';

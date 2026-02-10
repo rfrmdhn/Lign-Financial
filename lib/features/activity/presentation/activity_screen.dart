@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
-import 'package:lign_financial/core/design_system/colors.dart';
+import 'package:lign_financial/core/themes/app_colors.dart';
 import 'package:lign_financial/core/widgets/lign_status_badge.dart';
 import 'package:lign_financial/core/utils/currency_formatter.dart';
 import 'package:lign_financial/features/auth/domain/app_mode.dart';

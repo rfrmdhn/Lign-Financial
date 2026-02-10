@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:lign_financial/core/constants/app_strings.dart';
-import 'package:lign_financial/core/design_system/colors.dart';
+import 'package:lign_financial/core/themes/app_colors.dart';
 import 'package:lign_financial/features/auth/domain/app_mode.dart';
 import 'package:lign_financial/features/auth/presentation/auth_controller.dart';
 import 'package:lign_financial/features/home/presentation/finance_home_content.dart';
