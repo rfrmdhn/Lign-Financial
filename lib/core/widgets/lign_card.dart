@@ -1,0 +1,31 @@
+import 'package:flutter/material.dart';
+import 'package:lign_financial/core/design_system/colors.dart';
+
+class LignCard extends StatelessWidget {
+  final Widget child;
+  final EdgeInsetsGeometry? padding;
+  final VoidCallback? onTap;
+
+  const LignCard({
+    super.key,
+    required this.child,
+    this.padding,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          color: LignColors.cardSurface,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: LignColors.border),
+        ),
+        padding: padding ?? const EdgeInsets.all(16),
+        child: child,
+      ),
+    );
+  }
+}
