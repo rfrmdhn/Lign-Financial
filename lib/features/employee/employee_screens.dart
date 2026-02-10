@@ -1,32 +1,6 @@
-import 'package:flutter/material.dart';
-import 'package:lign_financial/core/design_system/colors.dart';
-
-class EmployeeHomeScreen extends StatelessWidget {
-  const EmployeeHomeScreen({super.key});
-  @override
-  Widget build(BuildContext context) => const Center(child: Text('Employee Home'));
-}
-
-class EmployeeCardsScreen extends StatelessWidget {
-  const EmployeeCardsScreen({super.key});
-  @override
-  Widget build(BuildContext context) => const Center(child: Text('Employee Cards'));
-}
-
-class EmployeeQRISScreen extends StatelessWidget {
-  const EmployeeQRISScreen({super.key});
-  @override
-  Widget build(BuildContext context) => const Center(child: Text('QRIS Scanner Placeholder', style: TextStyle(color: LignColors.textPrimary)));
-}
-
-class EmployeeExpensesScreen extends StatelessWidget {
-  const EmployeeExpensesScreen({super.key});
-  @override
-  Widget build(BuildContext context) => const Center(child: Text('Employee Expenses'));
-}
-
-class EmployeeProfileScreen extends StatelessWidget {
-  const EmployeeProfileScreen({super.key});
-  @override
-  Widget build(BuildContext context) => const Center(child: Text('Employee Profile'));
-}
+// Barrel file — re-exports all employee feature screens.
+export 'package:lign_financial/features/employee/home/home_screen.dart';
+export 'package:lign_financial/features/employee/cards/cards_screen.dart';
+export 'package:lign_financial/features/employee/qris/qris_screen.dart';
+export 'package:lign_financial/features/employee/expenses/expenses_screen.dart';
+export 'package:lign_financial/features/employee/profile/profile_screen.dart';
