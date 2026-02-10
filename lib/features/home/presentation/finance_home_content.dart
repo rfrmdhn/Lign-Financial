@@ -8,41 +8,46 @@ import 'package:lign_financial/core/widgets/lign_card.dart';
 import 'package:lign_financial/core/widgets/lign_button.dart';
 import 'package:lign_financial/core/widgets/lign_status_badge.dart';
 import 'package:lign_financial/core/utils/currency_formatter.dart';
-import 'package:lign_financial/features/home/data/home_view_model.dart';
+import 'package:lign_financial/features/home/domain/home_data.dart';
+import 'package:lign_financial/features/home/domain/transaction.dart';
+import 'package:lign_financial/features/home/presentation/home_providers.dart';
 
 class FinanceHomeContent extends ConsumerWidget {
   const FinanceHomeContent({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final data = ref.watch(financeHomeDataProvider);
+    final dataAsync = ref.watch(financeHomeDataProvider);
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // 1. Company Wallet Summary
-          _CompanyWalletCard(data: data),
-          const SizedBox(height: 20),
-
-          // 2. Budget Overview
-          _BudgetOverviewCard(data: data),
-          const SizedBox(height: 20),
-
-          // 3. Pending Approvals
-          if (data.pendingApprovals.isNotEmpty) ...[
-            _PendingApprovalsSection(
-                approvals: data.pendingApprovals),
+    return dataAsync.when(
+      data: (data) => SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 1. Company Wallet Summary
+            _CompanyWalletCard(data: data),
             const SizedBox(height: 20),
-          ],
 
-          // 4. Recent Company Transactions
-          _RecentTransactionsSection(
-              transactions: data.recentCompanyTransactions),
-          const SizedBox(height: 16),
-        ],
+            // 2. Budget Overview
+            _BudgetOverviewCard(data: data),
+            const SizedBox(height: 20),
+
+            // 3. Pending Approvals
+            if (data.pendingApprovals.isNotEmpty) ...[
+              _PendingApprovalsSection(approvals: data.pendingApprovals),
+              const SizedBox(height: 20),
+            ],
+
+            // 4. Recent Company Transactions
+            _RecentTransactionsSection(
+                transactions: data.recentCompanyTransactions),
+            const SizedBox(height: 16),
+          ],
+        ),
       ),
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (err, stack) => Center(child: Text('Error: $err')),
     );
   }
 }

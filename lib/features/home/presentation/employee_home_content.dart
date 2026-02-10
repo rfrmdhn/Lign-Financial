@@ -8,34 +8,39 @@ import 'package:lign_financial/core/design_system/colors.dart';
 import 'package:lign_financial/core/widgets/lign_card.dart';
 import 'package:lign_financial/core/widgets/lign_status_badge.dart';
 import 'package:lign_financial/core/utils/currency_formatter.dart';
-import 'package:lign_financial/features/home/data/home_view_model.dart';
+import 'package:lign_financial/features/home/domain/home_data.dart';
+import 'package:lign_financial/features/home/domain/transaction.dart';
+import 'package:lign_financial/features/home/presentation/home_providers.dart';
 
 class EmployeeHomeContent extends ConsumerWidget {
   const EmployeeHomeContent({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final data = ref.watch(employeeHomeDataProvider);
+    final dataAsync = ref.watch(employeeHomeDataProvider);
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // 1. Personal Budget Card
-          _PersonalBudgetCard(data: data),
-          const SizedBox(height: 24),
+    return dataAsync.when(
+      data: (data) => SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 1. Personal Budget Card
+            _PersonalBudgetCard(data: data),
+            const SizedBox(height: 24),
 
-          // 2. Quick Actions Grid 2x2
-          _QuickActionsGrid(),
-          const SizedBox(height: 24),
+            // 2. Quick Actions Grid 2x2
+            _QuickActionsGrid(),
+            const SizedBox(height: 24),
 
-          // 3. Recent Transactions
-          _RecentTransactionsSection(
-              transactions: data.recentTransactions),
-          const SizedBox(height: 16),
-        ],
+            // 3. Recent Transactions
+            _RecentTransactionsSection(transactions: data.recentTransactions),
+            const SizedBox(height: 16),
+          ],
+        ),
       ),
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (err, stack) => Center(child: Text('Error: $err')),
     );
   }
 }

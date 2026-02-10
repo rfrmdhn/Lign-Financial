@@ -1,5 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:lign_financial/features/auth/data/auth_repository.dart';
+import 'package:lign_financial/features/auth/domain/app_mode.dart';
+import 'package:lign_financial/features/auth/domain/auth_repository.dart';
+import 'package:lign_financial/features/auth/domain/user.dart';
+import 'package:lign_financial/features/auth/data/auth_repository_impl.dart';
 
 class AuthState {
   final User? user;
@@ -27,17 +30,26 @@ class AuthController extends Notifier<AuthState> {
     return const AuthState();
   }
 
-  /// Mock login — accepts any non-empty username/password.
-  /// Defaults to Finance mode after login.
-  void login(String username, String password) {
-    state = AuthState(
-      user: User(
-        id: '1',
-        name: username,
-        email: '$username@lign.co',
-      ),
-      activeMode: AppMode.finance,
-    );
+final authRepositoryProvider = Provider<AuthRepository>((ref) {
+  return AuthRepositoryImpl();
+});
+
+class AuthController extends Notifier<AuthState> {
+  @override
+  AuthState build() {
+    return const AuthState();
+  }
+
+  Future<void> login(String username, String password) async {
+    final repository = ref.read(authRepositoryProvider);
+    final user = await repository.login(username, password);
+    
+    if (user != null) {
+      state = AuthState(
+        user: user,
+        activeMode: AppMode.finance,
+      );
+    }
   }
 
   void switchMode() {
@@ -49,7 +61,9 @@ class AuthController extends Notifier<AuthState> {
     );
   }
 
-  void logout() {
+  Future<void> logout() async {
+    final repository = ref.read(authRepositoryProvider);
+    await repository.logout();
     state = const AuthState();
   }
 }

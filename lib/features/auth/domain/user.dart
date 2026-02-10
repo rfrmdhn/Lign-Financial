@@ -1,5 +1,3 @@
-enum AppMode { finance, employee }
-
 class User {
   final String id;
   final String name;

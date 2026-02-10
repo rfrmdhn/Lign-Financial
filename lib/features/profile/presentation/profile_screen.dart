@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import 'package:lign_financial/core/design_system/colors.dart';
 import 'package:lign_financial/core/widgets/lign_button.dart';
-import 'package:lign_financial/features/auth/data/auth_repository.dart';
+import 'package:lign_financial/features/auth/domain/app_mode.dart';
 import 'package:lign_financial/features/auth/presentation/auth_controller.dart';
 
 class ProfileScreen extends ConsumerWidget {

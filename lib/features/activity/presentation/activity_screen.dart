@@ -6,9 +6,10 @@ import 'package:intl/intl.dart';
 import 'package:lign_financial/core/design_system/colors.dart';
 import 'package:lign_financial/core/widgets/lign_status_badge.dart';
 import 'package:lign_financial/core/utils/currency_formatter.dart';
-import 'package:lign_financial/features/auth/data/auth_repository.dart';
+import 'package:lign_financial/features/auth/domain/app_mode.dart';
 import 'package:lign_financial/features/auth/presentation/auth_controller.dart';
-import 'package:lign_financial/features/home/data/home_view_model.dart';
+import 'package:lign_financial/features/home/domain/transaction.dart';
+import 'package:lign_financial/features/home/presentation/home_providers.dart';
 
 class ActivityScreen extends ConsumerStatefulWidget {
   const ActivityScreen({super.key});
@@ -38,12 +39,12 @@ class _ActivityScreenState extends ConsumerState<ActivityScreen>
   Widget build(BuildContext context) {
     final authState = ref.watch(authControllerProvider);
     final isFinance = authState.activeMode == AppMode.finance;
-    final financeData = ref.watch(financeHomeDataProvider);
-    final employeeData = ref.watch(employeeHomeDataProvider);
+    final financeDataAsync = ref.watch(financeHomeDataProvider);
+    final employeeDataAsync = ref.watch(employeeHomeDataProvider);
 
     final transactions = isFinance
-        ? financeData.recentCompanyTransactions
-        : employeeData.recentTransactions;
+        ? financeDataAsync.valueOrNull?.recentCompanyTransactions ?? []
+        : employeeDataAsync.valueOrNull?.recentTransactions ?? [];
 
     return Scaffold(
       backgroundColor: LignColors.secondaryBackground,
