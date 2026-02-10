@@ -17,6 +17,12 @@ class LoginScreen extends ConsumerWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              Image.asset(
+                'assets/icon/Logo-1.png',
+                width: 120,
+                height: 120,
+              ),
+              const SizedBox(height: 16),
               Text(
                 'Lign Financial',
                 style: Theme.of(context).textTheme.displayMedium,
