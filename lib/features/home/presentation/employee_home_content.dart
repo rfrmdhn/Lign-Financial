@@ -51,11 +51,13 @@ class _PersonalBudgetCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return LignCard(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+    return GestureDetector(
+      onTap: () => context.push('/budget'),
+      child: LignCard(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -184,6 +186,7 @@ class _PersonalBudgetCard extends StatelessWidget {
           ),
         ],
       ),
+      ),
     );
   }
 }
@@ -222,7 +225,7 @@ class _QuickActionsGrid extends StatelessWidget {
               child: _QuickActionItem(
                 icon: Icons.send_outlined,
                 label: 'Transfer',
-                onTap: () {},
+                onTap: () => context.push('/transfer'),
               ),
             ),
           ],
@@ -361,12 +364,15 @@ class _RecentTransactionsSection extends StatelessWidget {
                 color: LignColors.textPrimary,
               ),
             ),
-            Text(
-              'See all',
-              style: GoogleFonts.inter(
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-                color: LignColors.textSecondary,
+            GestureDetector(
+              onTap: () => context.go('/activity'),
+              child: Text(
+                'See all',
+                style: GoogleFonts.inter(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: LignColors.textSecondary,
+                ),
               ),
             ),
           ],

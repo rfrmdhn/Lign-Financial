@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:go_router/go_router.dart';
 
 import 'package:lign_financial/core/design_system/colors.dart';
 import 'package:lign_financial/features/auth/data/auth_repository.dart';
@@ -134,18 +135,21 @@ class _HomeHeader extends StatelessWidget {
           const SizedBox(width: 10),
 
           // Notification bell
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: LignColors.secondaryBackground,
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: LignColors.border),
-            ),
-            child: const Icon(
-              Icons.notifications_outlined,
-              color: LignColors.textPrimary,
-              size: 20,
+          GestureDetector(
+            onTap: () => context.push('/notifications'),
+            child: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: LignColors.secondaryBackground,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: LignColors.border),
+              ),
+              child: const Icon(
+                Icons.notifications_outlined,
+                color: LignColors.textPrimary,
+                size: 20,
+              ),
             ),
           ),
         ],

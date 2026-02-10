@@ -10,6 +10,9 @@ import 'package:lign_financial/features/qris/presentation/qris_screen.dart';
 import 'package:lign_financial/features/activity/presentation/activity_screen.dart';
 import 'package:lign_financial/features/profile/presentation/profile_screen.dart';
 import 'package:lign_financial/features/shared/scaffold_with_navigation.dart';
+import 'package:lign_financial/features/transfer/presentation/transfer_screen.dart';
+import 'package:lign_financial/features/budget/presentation/budget_screen.dart';
+import 'package:lign_financial/features/notifications/presentation/notifications_screen.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -31,6 +34,21 @@ final goRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/login',
         builder: (context, state) => const LoginScreen(),
+      ),
+      GoRoute(
+        path: '/transfer',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const TransferScreen(),
+      ),
+      GoRoute(
+        path: '/budget',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const BudgetScreen(),
+      ),
+      GoRoute(
+        path: '/notifications',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const NotificationsScreen(),
       ),
 
       // Unified Shell — single bottom navigation for all modes
