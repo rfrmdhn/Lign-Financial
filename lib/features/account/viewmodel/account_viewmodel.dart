@@ -31,7 +31,7 @@ class AccountViewModel extends Notifier<AccountState> {
   @override
   AccountState build() {
     _repository = AccountRepositoryImpl();
-    loadAccountData();
+    Future.microtask(() => loadAccountData());
     return const AccountState(isLoading: true);
   }
 

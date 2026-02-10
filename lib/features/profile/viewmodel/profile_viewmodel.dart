@@ -33,7 +33,7 @@ class ProfileState {
 class ProfileViewModel extends Notifier<ProfileState> {
   @override
   ProfileState build() {
-    loadProfile();
+    Future.microtask(() => loadProfile());
     return const ProfileState(isLoading: true);
   }
 

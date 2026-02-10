@@ -11,8 +11,8 @@ class HomeViewModel extends Notifier<HomeState> {
   @override
   HomeState build() {
     _repository = HomeRepositoryImpl();
-    // Load initial data
-    loadData();
+    // Schedule load after build() completes
+    Future.microtask(() => loadData());
     return const HomeState(isLoading: true);
   }
 

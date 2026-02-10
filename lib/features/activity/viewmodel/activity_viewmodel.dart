@@ -42,7 +42,7 @@ class ActivityViewModel extends Notifier<ActivityState> {
   @override
   ActivityState build() {
     _repository = HomeRepositoryImpl();
-    loadActivities();
+    Future.microtask(() => loadActivities());
     return const ActivityState(isLoading: true);
   }
 

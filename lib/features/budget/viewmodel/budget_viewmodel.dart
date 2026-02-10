@@ -33,7 +33,7 @@ class BudgetViewModel extends Notifier<BudgetState> {
   @override
   BudgetState build() {
     _repository = HomeRepositoryImpl();
-    loadData();
+    Future.microtask(() => loadData());
     return const BudgetState(isLoading: true);
   }
 

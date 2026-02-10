@@ -16,23 +16,23 @@ class LoginPage extends ConsumerStatefulWidget {
 }
 
 class _LoginPageState extends ConsumerState<LoginPage> {
-  final _emailController = TextEditingController();
+  final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
 
   @override
   void dispose() {
-    _emailController.dispose();
+    _usernameController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
 
   Future<void> _login() async {
-    final email = _emailController.text;
+    final username = _usernameController.text;
     final password = _passwordController.text;
 
-    if (email.isEmpty || password.isEmpty) return;
+    if (username.isEmpty || password.isEmpty) return;
 
-    await ref.read(authViewModelProvider.notifier).login(email, password);
+    await ref.read(authViewModelProvider.notifier).login(username, password);
     
     if (mounted) {
       final state = ref.read(authViewModelProvider);
@@ -88,10 +88,9 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               ),
               const SizedBox(height: 48),
               LignTextInput(
-                label: 'Email',
-                controller: _emailController,
-                hintText: 'Enter your email',
-                keyboardType: TextInputType.emailAddress,
+                label: 'Username',
+                controller: _usernameController,
+                hintText: 'Enter your username',
               ),
               const SizedBox(height: 16),
               LignTextInput(
