@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
+
 
 import 'package:lign_financial/core/design_system/colors.dart';
 import 'package:lign_financial/core/widgets/lign_card.dart';
 import 'package:lign_financial/core/widgets/lign_button.dart';
+import 'package:lign_financial/core/widgets/lign_status_badge.dart';
+import 'package:lign_financial/core/utils/currency_formatter.dart';
 import 'package:lign_financial/features/home/data/home_view_model.dart';
 
 class FinanceHomeContent extends ConsumerWidget {
@@ -14,8 +16,6 @@ class FinanceHomeContent extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final data = ref.watch(financeHomeDataProvider);
-    final fmt = NumberFormat.currency(
-        locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
 
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -23,23 +23,23 @@ class FinanceHomeContent extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // 1. Company Wallet Summary
-          _CompanyWalletCard(data: data, fmt: fmt),
+          _CompanyWalletCard(data: data),
           const SizedBox(height: 20),
 
           // 2. Budget Overview
-          _BudgetOverviewCard(data: data, fmt: fmt),
+          _BudgetOverviewCard(data: data),
           const SizedBox(height: 20),
 
           // 3. Pending Approvals
           if (data.pendingApprovals.isNotEmpty) ...[
             _PendingApprovalsSection(
-                approvals: data.pendingApprovals, fmt: fmt),
+                approvals: data.pendingApprovals),
             const SizedBox(height: 20),
           ],
 
           // 4. Recent Company Transactions
           _RecentTransactionsSection(
-              transactions: data.recentCompanyTransactions, fmt: fmt),
+              transactions: data.recentCompanyTransactions),
           const SizedBox(height: 16),
         ],
       ),
@@ -53,9 +53,8 @@ class FinanceHomeContent extends ConsumerWidget {
 
 class _CompanyWalletCard extends StatelessWidget {
   final FinanceHomeData data;
-  final NumberFormat fmt;
 
-  const _CompanyWalletCard({required this.data, required this.fmt});
+  const _CompanyWalletCard({required this.data});
 
   @override
   Widget build(BuildContext context) {
@@ -106,7 +105,7 @@ class _CompanyWalletCard extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            fmt.format(data.totalCompanyBalance),
+            CurrencyFormatter.format(data.totalCompanyBalance),
             style: GoogleFonts.inter(
               fontSize: 28,
               fontWeight: FontWeight.bold,
@@ -122,7 +121,7 @@ class _CompanyWalletCard extends StatelessWidget {
               Expanded(
                 child: _WalletMetric(
                   label: 'Total Allocated',
-                  value: fmt.format(data.totalAllocatedBudget),
+                  value: CurrencyFormatter.format(data.totalAllocatedBudget),
                   color: LignColors.electricLime,
                 ),
               ),
@@ -134,7 +133,7 @@ class _CompanyWalletCard extends StatelessWidget {
               Expanded(
                 child: _WalletMetric(
                   label: 'Remaining',
-                  value: fmt.format(data.remainingBalance),
+                  value: CurrencyFormatter.format(data.remainingBalance),
                   color: Colors.white,
                 ),
               ),
@@ -189,9 +188,8 @@ class _WalletMetric extends StatelessWidget {
 
 class _BudgetOverviewCard extends StatelessWidget {
   final FinanceHomeData data;
-  final NumberFormat fmt;
 
-  const _BudgetOverviewCard({required this.data, required this.fmt});
+  const _BudgetOverviewCard({required this.data});
 
   @override
   Widget build(BuildContext context) {
@@ -221,7 +219,7 @@ class _BudgetOverviewCard extends StatelessWidget {
               const SizedBox(width: 16),
               _OverviewMetric(
                 icon: Icons.account_balance_wallet_outlined,
-                value: _formatCompact(data.totalDistributedBudget),
+                value: CurrencyFormatter.compact(data.totalDistributedBudget),
                 label: 'Distributed',
               ),
               const SizedBox(width: 16),
@@ -251,12 +249,12 @@ class _BudgetOverviewCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Used ${fmt.format(data.budgetUsed)}',
+                'Used ${CurrencyFormatter.format(data.budgetUsed)}',
                 style: GoogleFonts.inter(
                     fontSize: 11, color: LignColors.textSecondary),
               ),
               Text(
-                'of ${fmt.format(data.totalDistributedBudget)}',
+                'of ${CurrencyFormatter.format(data.totalDistributedBudget)}',
                 style: GoogleFonts.inter(
                     fontSize: 11, color: LignColors.textSecondary),
               ),
@@ -265,15 +263,6 @@ class _BudgetOverviewCard extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  static String _formatCompact(double value) {
-    if (value >= 1e9) {
-      return '${(value / 1e9).toStringAsFixed(1)}B';
-    } else if (value >= 1e6) {
-      return '${(value / 1e6).toStringAsFixed(0)}M';
-    }
-    return NumberFormat.compact().format(value);
   }
 }
 
@@ -329,11 +318,9 @@ class _OverviewMetric extends StatelessWidget {
 
 class _PendingApprovalsSection extends StatelessWidget {
   final List<PendingApproval> approvals;
-  final NumberFormat fmt;
 
   const _PendingApprovalsSection({
     required this.approvals,
-    required this.fmt,
   });
 
   @override
@@ -372,7 +359,7 @@ class _PendingApprovalsSection extends StatelessWidget {
         const SizedBox(height: 12),
         ...approvals.map((a) => Padding(
               padding: const EdgeInsets.only(bottom: 10),
-              child: _ApprovalCard(approval: a, fmt: fmt),
+              child: _ApprovalCard(approval: a),
             )),
       ],
     );
@@ -381,9 +368,8 @@ class _PendingApprovalsSection extends StatelessWidget {
 
 class _ApprovalCard extends StatelessWidget {
   final PendingApproval approval;
-  final NumberFormat fmt;
 
-  const _ApprovalCard({required this.approval, required this.fmt});
+  const _ApprovalCard({required this.approval});
 
   @override
   Widget build(BuildContext context) {
@@ -436,7 +422,7 @@ class _ApprovalCard extends StatelessWidget {
                 ),
               ),
               Text(
-                fmt.format(approval.amount),
+                CurrencyFormatter.format(approval.amount),
                 style: GoogleFonts.inter(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
@@ -478,11 +464,9 @@ class _ApprovalCard extends StatelessWidget {
 
 class _RecentTransactionsSection extends StatelessWidget {
   final List<Transaction> transactions;
-  final NumberFormat fmt;
 
   const _RecentTransactionsSection({
     required this.transactions,
-    required this.fmt,
   });
 
   @override
@@ -523,7 +507,7 @@ class _RecentTransactionsSection extends StatelessWidget {
               final tx = transactions[index];
               return Column(
                 children: [
-                  _CompanyTransactionTile(transaction: tx, fmt: fmt),
+                  _CompanyTransactionTile(transaction: tx),
                   if (index < transactions.length - 1)
                     const Divider(
                         height: 1, indent: 60, color: LignColors.border),
@@ -539,11 +523,9 @@ class _RecentTransactionsSection extends StatelessWidget {
 
 class _CompanyTransactionTile extends StatelessWidget {
   final Transaction transaction;
-  final NumberFormat fmt;
 
   const _CompanyTransactionTile({
     required this.transaction,
-    required this.fmt,
   });
 
   @override
@@ -601,7 +583,7 @@ class _CompanyTransactionTile extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                '${isPositive ? '+' : '-'}${fmt.format(transaction.amount.abs())}',
+                '${isPositive ? '+' : '-'}${CurrencyFormatter.format(transaction.amount.abs())}',
                 style: GoogleFonts.inter(
                   fontSize: 13,
                   fontWeight: FontWeight.bold,
@@ -611,7 +593,7 @@ class _CompanyTransactionTile extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 4),
-              _StatusBadge(status: transaction.status),
+              LignStatusBadge(status: transaction.status),
             ],
           ),
         ],
@@ -620,46 +602,4 @@ class _CompanyTransactionTile extends StatelessWidget {
   }
 }
 
-class _StatusBadge extends StatelessWidget {
-  final TransactionStatus status;
 
-  const _StatusBadge({required this.status});
-
-  @override
-  Widget build(BuildContext context) {
-    Color bgColor;
-    Color textColor;
-    String label;
-
-    switch (status) {
-      case TransactionStatus.completed:
-        bgColor = LignColors.electricLime.withValues(alpha: 0.2);
-        textColor = const Color(0xFF2E7D32);
-        label = 'Completed';
-      case TransactionStatus.pending:
-        bgColor = LignColors.warning.withValues(alpha: 0.15);
-        textColor = const Color(0xFFB8860B);
-        label = 'Pending';
-      case TransactionStatus.rejected:
-        bgColor = LignColors.error.withValues(alpha: 0.12);
-        textColor = LignColors.error;
-        label = 'Rejected';
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Text(
-        label,
-        style: GoogleFonts.inter(
-          fontSize: 10,
-          fontWeight: FontWeight.w600,
-          color: textColor,
-        ),
-      ),
-    );
-  }
-}

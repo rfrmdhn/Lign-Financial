@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
+
 import 'package:lign_financial/core/design_system/colors.dart';
 import 'package:lign_financial/core/widgets/lign_button.dart';
 import 'package:lign_financial/core/widgets/lign_text_input.dart';
+import 'package:lign_financial/core/utils/currency_formatter.dart';
 
 class QRISScreen extends StatefulWidget {
   const QRISScreen({super.key});
@@ -69,7 +70,7 @@ class _QRISScreenState extends State<QRISScreen> {
     setState(() {
       if (amount > _remainingLimit) {
         _errorMessage =
-            'Amount exceeds remaining limit (Rp ${NumberFormat.decimalPattern('id').format(_remainingLimit)})';
+            'Amount exceeds remaining limit (${CurrencyFormatter.format(_remainingLimit)})';
       } else {
         _errorMessage = null;
       }
@@ -182,7 +183,7 @@ class _QRISScreenState extends State<QRISScreen> {
                     size: 16, color: LignColors.textSecondary),
                 const SizedBox(width: 8),
                 Text(
-                  'Remaining limit: Rp ${NumberFormat.decimalPattern('id').format(_remainingLimit)}',
+                  'Remaining limit: ${CurrencyFormatter.format(_remainingLimit)}',
                   style: GoogleFonts.inter(
                     fontSize: 12,
                     color: LignColors.textPrimary,
@@ -227,8 +228,7 @@ class _QRISScreenState extends State<QRISScreen> {
 
   Widget _buildReviewStep() {
     final amount = double.tryParse(_amountController.text) ?? 0;
-    final currencyFormat =
-        NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
+    final formattedAmount = CurrencyFormatter.format(amount);
     final needsApproval = amount > 1000000; // mock threshold
 
     return Padding(
@@ -250,13 +250,13 @@ class _QRISScreenState extends State<QRISScreen> {
             ),
             child: Column(
               children: [
-                _buildReviewRow('Amount', currencyFormat.format(amount)),
+                _buildReviewRow('Amount', formattedAmount),
                 const SizedBox(height: 12),
                 _buildReviewRow('Admin Fee', 'Rp 0'),
                 const Divider(height: 24),
                 _buildReviewRow(
                   'Total',
-                  currencyFormat.format(amount),
+                  formattedAmount,
                   isBold: true,
                   color: LignColors.textPrimary,
                 ),
@@ -308,8 +308,7 @@ class _QRISScreenState extends State<QRISScreen> {
 
   Widget _buildSuccessStep() {
     final amount = double.tryParse(_amountController.text) ?? 0;
-    final currencyFormat =
-        NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
+    final formattedAmount = CurrencyFormatter.format(amount);
     final needsApproval = amount > 1000000;
 
     return Center(
@@ -331,7 +330,7 @@ class _QRISScreenState extends State<QRISScreen> {
               style: Theme.of(context).textTheme.headlineSmall,
             ),
             const SizedBox(height: 8),
-            Text(currencyFormat.format(amount),
+            Text(formattedAmount,
                 style: GoogleFonts.inter(
                     fontSize: 32, fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),

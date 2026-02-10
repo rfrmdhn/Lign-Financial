@@ -4,6 +4,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 
 import 'package:lign_financial/core/design_system/colors.dart';
+import 'package:lign_financial/core/widgets/lign_status_badge.dart';
+import 'package:lign_financial/core/utils/currency_formatter.dart';
 import 'package:lign_financial/features/auth/data/auth_repository.dart';
 import 'package:lign_financial/features/auth/presentation/auth_controller.dart';
 import 'package:lign_financial/features/home/data/home_view_model.dart';
@@ -170,8 +172,6 @@ class _TransactionList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fmt = NumberFormat.currency(
-        locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
 
     if (transactions.isEmpty) {
       return Center(
@@ -195,7 +195,7 @@ class _TransactionList extends StatelessWidget {
       separatorBuilder: (_, __) => const SizedBox(height: 10),
       itemBuilder: (context, index) {
         final tx = transactions[index];
-        return _ActivityTransactionCard(transaction: tx, fmt: fmt);
+        return _ActivityTransactionCard(transaction: tx);
       },
     );
   }
@@ -203,11 +203,9 @@ class _TransactionList extends StatelessWidget {
 
 class _ActivityTransactionCard extends StatelessWidget {
   final Transaction transaction;
-  final NumberFormat fmt;
 
   const _ActivityTransactionCard({
     required this.transaction,
-    required this.fmt,
   });
 
   @override
@@ -271,7 +269,7 @@ class _ActivityTransactionCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                '${isPositive ? '+' : '-'}${fmt.format(transaction.amount.abs())}',
+                '${isPositive ? '+' : '-'}${CurrencyFormatter.format(transaction.amount.abs())}',
                 style: GoogleFonts.inter(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
@@ -281,7 +279,7 @@ class _ActivityTransactionCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 4),
-              _StatusBadge(status: transaction.status),
+              LignStatusBadge(status: transaction.status),
             ],
           ),
         ],
@@ -290,46 +288,4 @@ class _ActivityTransactionCard extends StatelessWidget {
   }
 }
 
-class _StatusBadge extends StatelessWidget {
-  final TransactionStatus status;
 
-  const _StatusBadge({required this.status});
-
-  @override
-  Widget build(BuildContext context) {
-    Color bgColor;
-    Color textColor;
-    String label;
-
-    switch (status) {
-      case TransactionStatus.completed:
-        bgColor = LignColors.electricLime.withValues(alpha: 0.2);
-        textColor = const Color(0xFF2E7D32);
-        label = 'Completed';
-      case TransactionStatus.pending:
-        bgColor = LignColors.warning.withValues(alpha: 0.15);
-        textColor = const Color(0xFFB8860B);
-        label = 'Pending';
-      case TransactionStatus.rejected:
-        bgColor = LignColors.error.withValues(alpha: 0.12);
-        textColor = LignColors.error;
-        label = 'Rejected';
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Text(
-        label,
-        style: GoogleFonts.inter(
-          fontSize: 10,
-          fontWeight: FontWeight.w600,
-          color: textColor,
-        ),
-      ),
-    );
-  }
-}

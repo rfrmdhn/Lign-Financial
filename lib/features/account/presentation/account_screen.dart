@@ -1,17 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
+
 
 import 'package:lign_financial/core/design_system/colors.dart';
 import 'package:lign_financial/core/widgets/lign_card.dart';
+import 'package:lign_financial/core/utils/currency_formatter.dart';
 
 class AccountScreen extends StatelessWidget {
   const AccountScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final fmt = NumberFormat.currency(
-        locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
 
     return Scaffold(
       backgroundColor: LignColors.secondaryBackground,
@@ -40,7 +39,7 @@ class AccountScreen extends StatelessWidget {
                   const Divider(height: 24, color: LignColors.border),
                   _InfoRow(
                     label: 'Account Balance',
-                    value: fmt.format(2450000000),
+                    value: CurrencyFormatter.format(2450000000),
                     isHighlight: true,
                   ),
                   const Divider(height: 24, color: LignColors.border),

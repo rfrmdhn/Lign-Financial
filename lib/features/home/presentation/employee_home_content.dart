@@ -6,6 +6,8 @@ import 'package:intl/intl.dart';
 
 import 'package:lign_financial/core/design_system/colors.dart';
 import 'package:lign_financial/core/widgets/lign_card.dart';
+import 'package:lign_financial/core/widgets/lign_status_badge.dart';
+import 'package:lign_financial/core/utils/currency_formatter.dart';
 import 'package:lign_financial/features/home/data/home_view_model.dart';
 
 class EmployeeHomeContent extends ConsumerWidget {
@@ -14,8 +16,6 @@ class EmployeeHomeContent extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final data = ref.watch(employeeHomeDataProvider);
-    final fmt = NumberFormat.currency(
-        locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
 
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -23,7 +23,7 @@ class EmployeeHomeContent extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // 1. Personal Budget Card
-          _PersonalBudgetCard(data: data, fmt: fmt),
+          _PersonalBudgetCard(data: data),
           const SizedBox(height: 24),
 
           // 2. Quick Actions Grid 2x2
@@ -32,7 +32,7 @@ class EmployeeHomeContent extends ConsumerWidget {
 
           // 3. Recent Transactions
           _RecentTransactionsSection(
-              transactions: data.recentTransactions, fmt: fmt),
+              transactions: data.recentTransactions),
           const SizedBox(height: 16),
         ],
       ),
@@ -46,9 +46,8 @@ class EmployeeHomeContent extends ConsumerWidget {
 
 class _PersonalBudgetCard extends StatelessWidget {
   final EmployeeHomeData data;
-  final NumberFormat fmt;
 
-  const _PersonalBudgetCard({required this.data, required this.fmt});
+  const _PersonalBudgetCard({required this.data});
 
   @override
   Widget build(BuildContext context) {
@@ -95,7 +94,7 @@ class _PersonalBudgetCard extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            fmt.format(data.remainingBudget),
+            CurrencyFormatter.format(data.remainingBudget),
             style: GoogleFonts.inter(
               fontSize: 32,
               fontWeight: FontWeight.bold,
@@ -120,12 +119,12 @@ class _PersonalBudgetCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Spent ${fmt.format(data.spent)}',
+                'Spent ${CurrencyFormatter.format(data.spent)}',
                 style: GoogleFonts.inter(
                     fontSize: 11, color: LignColors.textSecondary),
               ),
               Text(
-                'of ${fmt.format(data.monthlyLimit)}',
+                'of ${CurrencyFormatter.format(data.monthlyLimit)}',
                 style: GoogleFonts.inter(
                     fontSize: 11, color: LignColors.textSecondary),
               ),
@@ -150,7 +149,7 @@ class _PersonalBudgetCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      fmt.format(data.totalBudget),
+                      CurrencyFormatter.format(data.totalBudget),
                       style: GoogleFonts.inter(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -171,7 +170,7 @@ class _PersonalBudgetCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      fmt.format(data.monthlyLimit),
+                      CurrencyFormatter.format(data.monthlyLimit),
                       style: GoogleFonts.inter(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -253,7 +252,7 @@ class _QuickActionsGrid extends StatelessWidget {
   }
 }
 
-class _QuickActionItem extends StatelessWidget {
+class _QuickActionItem extends StatefulWidget {
   final IconData icon;
   final String label;
   final bool isPrimary;
@@ -267,27 +266,60 @@ class _QuickActionItem extends StatelessWidget {
   });
 
   @override
+  State<_QuickActionItem> createState() => _QuickActionItemState();
+}
+
+class _QuickActionItemState extends State<_QuickActionItem>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 100),
+    );
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.95).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Material(
-      color: isPrimary ? LignColors.electricLime : LignColors.primaryBackground,
-      borderRadius: BorderRadius.circular(12),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+    return GestureDetector(
+      onTapDown: (_) => _controller.forward(),
+      onTapUp: (_) => _controller.reverse(),
+      onTapCancel: () => _controller.reverse(),
+      onTap: widget.onTap,
+      child: ScaleTransition(
+        scale: _scaleAnimation,
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 20),
           decoration: BoxDecoration(
+            color: widget.isPrimary
+                ? LignColors.electricLime
+                : LignColors.primaryBackground,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: isPrimary ? LignColors.electricLime : LignColors.border,
+              color: widget.isPrimary
+                  ? LignColors.electricLime
+                  : LignColors.border,
             ),
           ),
           child: Column(
             children: [
-              Icon(icon, size: 28, color: LignColors.textPrimary),
+              Icon(widget.icon, size: 28, color: LignColors.textPrimary),
               const SizedBox(height: 8),
               Text(
-                label,
+                widget.label,
                 style: GoogleFonts.inter(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
@@ -308,11 +340,9 @@ class _QuickActionItem extends StatelessWidget {
 
 class _RecentTransactionsSection extends StatelessWidget {
   final List<Transaction> transactions;
-  final NumberFormat fmt;
 
   const _RecentTransactionsSection({
     required this.transactions,
-    required this.fmt,
   });
 
   @override
@@ -353,7 +383,7 @@ class _RecentTransactionsSection extends StatelessWidget {
               final tx = transactions[index];
               return Column(
                 children: [
-                  _TransactionTile(transaction: tx, fmt: fmt),
+                  _TransactionTile(transaction: tx),
                   if (index < transactions.length - 1)
                     const Divider(
                         height: 1, indent: 60, color: LignColors.border),
@@ -369,9 +399,8 @@ class _RecentTransactionsSection extends StatelessWidget {
 
 class _TransactionTile extends StatelessWidget {
   final Transaction transaction;
-  final NumberFormat fmt;
 
-  const _TransactionTile({required this.transaction, required this.fmt});
+  const _TransactionTile({required this.transaction});
 
   @override
   Widget build(BuildContext context) {
@@ -429,7 +458,7 @@ class _TransactionTile extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                '${isPositive ? '+' : '-'}${fmt.format(transaction.amount.abs())}',
+                '${isPositive ? '+' : '-'}${CurrencyFormatter.format(transaction.amount.abs())}',
                 style: GoogleFonts.inter(
                   fontSize: 13,
                   fontWeight: FontWeight.bold,
@@ -439,7 +468,7 @@ class _TransactionTile extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 4),
-              _StatusBadge(status: transaction.status),
+              LignStatusBadge(status: transaction.status),
             ],
           ),
         ],
@@ -448,46 +477,4 @@ class _TransactionTile extends StatelessWidget {
   }
 }
 
-class _StatusBadge extends StatelessWidget {
-  final TransactionStatus status;
 
-  const _StatusBadge({required this.status});
-
-  @override
-  Widget build(BuildContext context) {
-    Color bgColor;
-    Color textColor;
-    String label;
-
-    switch (status) {
-      case TransactionStatus.completed:
-        bgColor = LignColors.electricLime.withValues(alpha: 0.2);
-        textColor = const Color(0xFF2E7D32);
-        label = 'Completed';
-      case TransactionStatus.pending:
-        bgColor = LignColors.warning.withValues(alpha: 0.15);
-        textColor = const Color(0xFFB8860B);
-        label = 'Pending';
-      case TransactionStatus.rejected:
-        bgColor = LignColors.error.withValues(alpha: 0.12);
-        textColor = LignColors.error;
-        label = 'Rejected';
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Text(
-        label,
-        style: GoogleFonts.inter(
-          fontSize: 10,
-          fontWeight: FontWeight.w600,
-          color: textColor,
-        ),
-      ),
-    );
-  }
-}
