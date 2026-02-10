@@ -8,8 +8,10 @@ import 'package:lign_financial/features/shared/finance_scaffold_with_navigation.
 import 'package:lign_financial/features/employee/employee_screens.dart';
 import 'package:lign_financial/features/finance/finance_screens.dart';
 
+import 'package:lign_financial/features/auth/presentation/auth_controller.dart';
+
 final goRouterProvider = Provider<GoRouter>((ref) {
-  final authState = ref.watch(authProvider);
+  final authState = ref.watch(authControllerProvider);
 
   return GoRouter(
     initialLocation: '/login',

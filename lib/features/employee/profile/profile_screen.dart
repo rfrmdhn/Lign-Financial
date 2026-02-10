@@ -4,14 +4,14 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:lign_financial/core/design_system/colors.dart';
 import 'package:lign_financial/core/widgets/lign_button.dart';
-import 'package:lign_financial/features/auth/data/auth_repository.dart';
+import 'package:lign_financial/features/auth/presentation/auth_controller.dart';
 
 class EmployeeProfileScreen extends ConsumerWidget {
   const EmployeeProfileScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final authState = ref.watch(authProvider);
+    final authState = ref.watch(authControllerProvider);
     final currencyFormat = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
 
     return Scaffold(
@@ -75,7 +75,7 @@ class EmployeeProfileScreen extends ConsumerWidget {
               text: 'Logout',
               type: LignButtonType.secondary,
               onPressed: () {
-                ref.read(authProvider.notifier).logout();
+                ref.read(authControllerProvider.notifier).logout();
               },
             ),
           ],

@@ -15,7 +15,7 @@ This project uses a Feature-first architecture with Riverpod for state managemen
 
 ```bash
 flutter pub get
-flutter run
+flutter run3
 ```
 
 ### Running Tests

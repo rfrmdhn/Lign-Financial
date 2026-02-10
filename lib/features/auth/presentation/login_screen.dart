@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:lign_financial/core/widgets/lign_button.dart';
 import 'package:lign_financial/features/auth/data/auth_repository.dart';
+import 'package:lign_financial/features/auth/presentation/auth_controller.dart';
 
 class LoginScreen extends ConsumerWidget {
   const LoginScreen({super.key});
@@ -30,7 +31,7 @@ class LoginScreen extends ConsumerWidget {
               LignButton(
                 text: 'Login as Employee',
                 onPressed: () {
-                  ref.read(authProvider.notifier).login(UserRole.employee);
+                  ref.read(authControllerProvider.notifier).login(UserRole.employee);
                 },
               ),
               const SizedBox(height: 16),
@@ -38,7 +39,7 @@ class LoginScreen extends ConsumerWidget {
                 text: 'Login as Finance',
                 type: LignButtonType.secondary,
                 onPressed: () {
-                  ref.read(authProvider.notifier).login(UserRole.finance);
+                  ref.read(authControllerProvider.notifier).login(UserRole.finance);
                 },
               ),
             ],
