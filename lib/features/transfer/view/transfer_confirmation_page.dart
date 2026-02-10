@@ -6,7 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:lign_financial/core/themes/app_colors.dart';
 
 import 'package:lign_financial/core/widgets/lign_button.dart';
-import 'package:lign_financial/core/widgets/lign_card.dart';
+
 
 import 'package:lign_financial/features/transfer/model/recipient_model.dart';
 import 'package:lign_financial/features/transfer/viewmodel/transfer_confirmation_vm.dart';
@@ -132,41 +132,149 @@ class _TransferConfirmationPageState
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Recipient details (read-only)
-            LignCard(
-              padding: const EdgeInsets.all(20),
+            // Recipient details (premium card)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 24),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Color(0xFF1E293B), Color(0xFF0F172A)],
+                ),
+                borderRadius: BorderRadius.circular(22),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF0F172A).withValues(alpha: 0.18),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
               child: Column(
                 children: [
-                  CircleAvatar(
-                    radius: 28,
-                    backgroundColor: LignColors.secondaryBackground,
-                    child: Text(
-                      widget.recipient.accountHolderName.isNotEmpty
-                          ? widget.recipient.accountHolderName[0].toUpperCase()
-                          : '?',
-                      style: GoogleFonts.inter(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: LignColors.textPrimary,
+                  // Avatar with accent ring
+                  Container(
+                    padding: const EdgeInsets.all(3),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: LignColors.electricLime.withValues(alpha: 0.6),
+                        width: 2,
+                      ),
+                    ),
+                    child: CircleAvatar(
+                      radius: 30,
+                      backgroundColor:
+                          LignColors.electricLime.withValues(alpha: 0.15),
+                      child: Text(
+                        widget.recipient.accountHolderName.isNotEmpty
+                            ? widget.recipient.accountHolderName[0]
+                                .toUpperCase()
+                            : '?',
+                        style: GoogleFonts.inter(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: LignColors.electricLime,
+                        ),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 16),
+
+                  // Name
                   Text(
                     widget.recipient.accountHolderName,
                     style: GoogleFonts.inter(
-                      fontSize: 18,
+                      fontSize: 20,
                       fontWeight: FontWeight.bold,
-                      color: LignColors.textPrimary,
+                      color: Colors.white,
                     ),
+                    textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 6),
-                  Text(
-                    '${widget.recipient.bankName} • ${widget.recipient.accountNumber}',
-                    style: GoogleFonts.inter(
-                      fontSize: 13,
-                      color: LignColors.textSecondary,
-                    ),
+                  const SizedBox(height: 16),
+
+                  // Divider
+                  Container(
+                    height: 1,
+                    color: Colors.white.withValues(alpha: 0.08),
+                  ),
+                  const SizedBox(height: 14),
+
+                  // Bank row
+                  Row(
+                    children: [
+                      Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(Icons.account_balance_outlined,
+                            size: 16, color: Colors.white54),
+                      ),
+                      const SizedBox(width: 12),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Bank',
+                            style: GoogleFonts.inter(
+                              fontSize: 10,
+                              color: Colors.white38,
+                            ),
+                          ),
+                          Text(
+                            widget.recipient.bankName,
+                            style: GoogleFonts.inter(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Account number row
+                  Row(
+                    children: [
+                      Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(Icons.credit_card_outlined,
+                            size: 16, color: Colors.white54),
+                      ),
+                      const SizedBox(width: 12),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Account Number',
+                            style: GoogleFonts.inter(
+                              fontSize: 10,
+                              color: Colors.white38,
+                            ),
+                          ),
+                          Text(
+                            widget.recipient.accountNumber,
+                            style: GoogleFonts.inter(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                              letterSpacing: 1.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ],
               ),
