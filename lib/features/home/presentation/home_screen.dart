@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 
+import 'package:lign_financial/core/constants/app_strings.dart';
 import 'package:lign_financial/core/design_system/colors.dart';
 import 'package:lign_financial/features/auth/domain/app_mode.dart';
 import 'package:lign_financial/features/auth/presentation/auth_controller.dart';
@@ -90,7 +91,7 @@ class _HomeHeader extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
-                    isFinanceMode ? 'Finance Mode' : 'Karyawan Mode',
+                    isFinanceMode ? AppStrings.financeMode : AppStrings.employeeMode,
                     style: GoogleFonts.inter(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
@@ -120,7 +121,7 @@ class _HomeHeader extends StatelessWidget {
                   const Icon(Icons.swap_horiz, size: 16, color: LignColors.textSecondary),
                   const SizedBox(width: 6),
                   Text(
-                    'Switch',
+                    AppStrings.switchMode,
                     style: GoogleFonts.inter(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,

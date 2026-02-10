@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'package:lign_financial/core/constants/app_strings.dart';
 import 'package:lign_financial/core/design_system/colors.dart';
 import 'package:lign_financial/core/widgets/lign_button.dart';
 import 'package:lign_financial/core/widgets/lign_text_input.dart';
@@ -25,7 +26,7 @@ class _TransferScreenState extends ConsumerState<TransferScreen> {
   final TextEditingController _notesController = TextEditingController();
   
   bool _isLoading = false;
-  String? _errorMessage;
+
   String _selectedType = '';
 
   @override
@@ -56,8 +57,10 @@ class _TransferScreenState extends ConsumerState<TransferScreen> {
       if (mounted) {
         setState(() {
           _isLoading = false;
-          _errorMessage = 'Transfer failed. Please try again.';
         });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Transfer failed. Please try again.')),
+        );
       }
     }
   }
@@ -91,9 +94,9 @@ class _TransferScreenState extends ConsumerState<TransferScreen> {
 
   String _getTitle() {
     switch (_currentStep) {
-      case TransferStep.menu: return 'Transfer';
-      case TransferStep.input: return 'Input Details';
-      case TransferStep.review: return 'Review Transfer';
+      case TransferStep.menu: return AppStrings.transfer;
+      case TransferStep.input: return AppStrings.transferInputDetails;
+      case TransferStep.review: return AppStrings.transferReview;
       default: return '';
     }
   }

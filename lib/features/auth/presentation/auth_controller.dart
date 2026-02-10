@@ -24,12 +24,6 @@ class AuthState {
   }
 }
 
-class AuthController extends Notifier<AuthState> {
-  @override
-  AuthState build() {
-    return const AuthState();
-  }
-
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
   return AuthRepositoryImpl();
 });

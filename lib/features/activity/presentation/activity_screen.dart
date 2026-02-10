@@ -43,8 +43,8 @@ class _ActivityScreenState extends ConsumerState<ActivityScreen>
     final employeeDataAsync = ref.watch(employeeHomeDataProvider);
 
     final transactions = isFinance
-        ? financeDataAsync.valueOrNull?.recentCompanyTransactions ?? []
-        : employeeDataAsync.valueOrNull?.recentTransactions ?? [];
+        ? financeDataAsync.asData?.value.recentCompanyTransactions ?? []
+        : employeeDataAsync.asData?.value.recentTransactions ?? [];
 
     return Scaffold(
       backgroundColor: LignColors.secondaryBackground,

@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'package:lign_financial/core/constants/app_strings.dart';
 import 'package:lign_financial/core/design_system/colors.dart';
 import 'package:lign_financial/core/utils/currency_formatter.dart';
-import 'package:lign_financial/features/home/data/home_view_model.dart';
+import 'package:lign_financial/features/home/domain/home_data.dart';
+import 'package:lign_financial/features/home/presentation/home_providers.dart';
 import 'package:lign_financial/core/widgets/lign_card.dart';
 
 class BudgetScreen extends ConsumerWidget {
@@ -12,57 +14,61 @@ class BudgetScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final data = ref.watch(employeeHomeDataProvider);
+    final dataAsync = ref.watch(employeeHomeDataProvider);
 
     return Scaffold(
       backgroundColor: LignColors.secondaryBackground,
       appBar: AppBar(
-        title: const Text('My Budget'),
+        title: const Text(AppStrings.myBudget),
         backgroundColor: LignColors.primaryBackground,
         foregroundColor: LignColors.textPrimary,
         elevation: 0,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _BudgetOverviewCard(data: data),
-            const SizedBox(height: 24),
-            Text(
-              'Budget Breakdown',
-              style: GoogleFonts.inter(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: LignColors.textPrimary,
+      body: dataAsync.when(
+        data: (data) => SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _BudgetOverviewCard(data: data),
+              const SizedBox(height: 24),
+              Text(
+                AppStrings.budgetBreakdown,
+                style: GoogleFonts.inter(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: LignColors.textPrimary,
+                ),
               ),
-            ),
-            const SizedBox(height: 12),
-            _BudgetUseItem(
-              category: 'Food & Beverage',
-              amount: 1500000,
-              total: 3000000,
-              color: Colors.orange,
-              icon: Icons.fastfood,
-            ),
-            const SizedBox(height: 12),
-            _BudgetUseItem(
-              category: 'Transportation',
-              amount: 800000,
-              total: 2000000,
-              color: Colors.blue,
-              icon: Icons.directions_car,
-            ),
-            const SizedBox(height: 12),
-            _BudgetUseItem(
-              category: 'Office Supplies',
-              amount: 200000,
-              total: 1000000,
-              color: Colors.purple,
-              icon: Icons.print,
-            ),
-          ],
+              const SizedBox(height: 12),
+              const _BudgetUseItem(
+                category: 'Food & Beverage',
+                amount: 1500000,
+                total: 3000000,
+                color: Colors.orange,
+                icon: Icons.fastfood,
+              ),
+              const SizedBox(height: 12),
+              const _BudgetUseItem(
+                category: 'Transportation',
+                amount: 800000,
+                total: 2000000,
+                color: Colors.blue,
+                icon: Icons.directions_car,
+              ),
+              const SizedBox(height: 12),
+              const _BudgetUseItem(
+                category: 'Office Supplies',
+                amount: 200000,
+                total: 1000000,
+                color: Colors.purple,
+                icon: Icons.print,
+              ),
+            ],
+          ),
         ),
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (err, stack) => Center(child: Text('Error: $err')),
       ),
     );
   }
@@ -80,7 +86,7 @@ class _BudgetOverviewCard extends StatelessWidget {
       child: Column(
         children: [
           Text(
-            'Remaining Balance',
+            AppStrings.remainingBalance,
             style: GoogleFonts.inter(
               fontSize: 14,
               color: LignColors.textSecondary,
@@ -100,11 +106,11 @@ class _BudgetOverviewCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               _BudgetStat(
-                label: 'Total Budget',
+                label: AppStrings.totalBudget,
                 value: CurrencyFormatter.format(data.totalBudget),
               ),
               _BudgetStat(
-                label: 'This Month',
+                label: AppStrings.thisMonth,
                 value: CurrencyFormatter.format(data.monthlyLimit),
                 alignRight: true,
               ),
@@ -122,7 +128,7 @@ class _BudgetOverviewCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            '${(data.spentPercentage * 100).toInt()}% Used',
+            '${(data.spentPercentage * 100).toInt()}% ${AppStrings.used}',
             style: GoogleFonts.inter(
               fontSize: 12,
               fontWeight: FontWeight.w600,
