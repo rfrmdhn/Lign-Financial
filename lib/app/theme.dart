@@ -89,7 +89,7 @@ class AppTheme {
           borderSide: const BorderSide(color: LignColors.electricLime, width: 2),
         ),
         labelStyle: const TextStyle(color: LignColors.textSecondary),
-        hintStyle: const TextStyle(color: LignColors.textDisabled),
+        hintStyle: const TextStyle(color: LignColors.textSecondary),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       ),
     );

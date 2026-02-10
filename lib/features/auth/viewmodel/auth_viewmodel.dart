@@ -33,11 +33,8 @@ class AuthState {
 class AuthViewModel extends Notifier<AuthState> {
   @override
   AuthState build() {
-    // Check local storage for session
-    // For now, mock logged in user
-    return const AuthState(
-      user: User(id: 'u1', name: 'User', email: 'user@lign.com'),
-    );
+    // Initial state: logged out
+    return const AuthState();
   }
 
   Future<void> login(String email, String password) async {

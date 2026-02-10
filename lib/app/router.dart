@@ -13,24 +13,21 @@ import 'package:lign_financial/features/shared/view/scaffold_with_navigation.dar
 import 'package:lign_financial/features/transfer/view/transfer_page.dart';
 import 'package:lign_financial/features/budget/view/budget_page.dart';
 import 'package:lign_financial/features/notifications/view/notifications_page.dart';
+import 'package:lign_financial/features/shared/view/splash_page.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
 final goRouterProvider = Provider<GoRouter>((ref) {
-  final authState = ref.watch(authViewModelProvider);
+
 
   return GoRouter(
     navigatorKey: _rootNavigatorKey,
-    initialLocation: '/home',
-    redirect: (context, state) {
-      final isLoggedIn = authState.user != null;
-      final isLoginRoute = state.matchedLocation == '/login';
-
-      if (!isLoggedIn && !isLoginRoute) return '/login';
-      if (isLoggedIn && isLoginRoute) return '/home';
-      return null;
-    },
+    initialLocation: '/splash',
     routes: [
+      GoRoute(
+        path: '/splash',
+        builder: (context, state) => const SplashScreen(),
+      ),
       GoRoute(
         path: '/login',
         builder: (context, state) => const LoginPage(),

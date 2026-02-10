@@ -57,15 +57,47 @@ class _LoginPageState extends ConsumerState<LoginPage> {
           padding: const EdgeInsets.all(24.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // Logo Icon
+              Center(
+                child: Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    color: LignColors.electricLime,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: LignColors.electricLime.withValues(alpha: 0.4),
+                        blurRadius: 20,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.account_balance_wallet,
+                    size: 40,
+                    color: LignColors.textPrimary,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
               Text(
                 'Lign',
                 textAlign: TextAlign.center,
                 style: GoogleFonts.outfit(
                   fontSize: 40,
                   fontWeight: FontWeight.bold,
-                  color: LignColors.electricLime,
+                  color: LignColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Corporate Banking',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(
+                  fontSize: 16,
+                  color: LignColors.textSecondary,
                 ),
               ),
               const SizedBox(height: 48),

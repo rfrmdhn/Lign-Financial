@@ -13,7 +13,7 @@ class HomeViewModel extends Notifier<HomeState> {
     _repository = HomeRepositoryImpl();
     // Load initial data
     loadData();
-    return const HomeState();
+    return const HomeState(isLoading: true);
   }
 
   Future<void> loadData() async {
