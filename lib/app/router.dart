@@ -6,6 +6,8 @@ import 'package:lign_financial/features/login/view/login_page.dart';
 import 'package:lign_financial/features/home/view/home_page.dart';
 import 'package:lign_financial/features/account/view/account_page.dart';
 import 'package:lign_financial/features/qris/view/qris_page.dart';
+import 'package:lign_financial/features/qris/view/qris_confirmation_page.dart';
+import 'package:lign_financial/features/qris/view/qris_success_page.dart';
 import 'package:lign_financial/features/activity/view/activity_page.dart';
 import 'package:lign_financial/features/profile/view/profile_page.dart';
 import 'package:lign_financial/features/shared/view/scaffold_with_navigation.dart';
@@ -100,6 +102,18 @@ final goRouterProvider = Provider<GoRouter>((ref) {
         path: '/notifications',
         parentNavigatorKey: _rootNavigatorKey,
         builder: (context, state) => const NotificationsScreen(),
+      ),
+
+      // QRIS — Payment Flow
+      GoRoute(
+        path: '/qris/confirm',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const QrisConfirmationPage(),
+      ),
+      GoRoute(
+        path: '/qris/success',
+        parentNavigatorKey: _rootNavigatorKey,
+        builder: (context, state) => const QrisSuccessPage(),
       ),
 
       // Unified Shell — single bottom navigation for all modes

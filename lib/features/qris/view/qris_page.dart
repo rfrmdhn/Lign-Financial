@@ -1,14 +1,19 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:google_mlkit_barcode_scanning/google_mlkit_barcode_scanning.dart'
+    as mlkit;
 
 import 'package:lign_financial/core/themes/app_colors.dart';
-import 'package:lign_financial/core/widgets/lign_button.dart';
-import 'package:lign_financial/core/widgets/lign_text_input.dart';
-import 'package:lign_financial/core/utils/currency_formatter.dart';
 import 'package:lign_financial/features/qris/viewmodel/qris_viewmodel.dart';
 
+/// QRIS Scan Page — real camera scanning + gallery upload.
 class QRISScreen extends ConsumerStatefulWidget {
   const QRISScreen({super.key});
 
@@ -16,294 +21,495 @@ class QRISScreen extends ConsumerStatefulWidget {
   ConsumerState<QRISScreen> createState() => _QRISScreenState();
 }
 
-class _QRISScreenState extends ConsumerState<QRISScreen> {
-  final TextEditingController _amountController = TextEditingController();
+class _QRISScreenState extends ConsumerState<QRISScreen>
+    with WidgetsBindingObserver {
+  late final MobileScannerController _scannerController;
+  final ImagePicker _imagePicker = ImagePicker();
+
+  /// Prevents duplicate scan processing.
+  bool _isProcessing = false;
+
+  /// Whether camera permission has been resolved.
+  bool _cameraPermissionChecked = false;
+  bool _cameraPermissionGranted = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+
+    // Reset QRIS state every time the page is entered.
+    Future.microtask(() {
+      ref.read(qrisViewModelProvider.notifier).reset();
+    });
+
+    _scannerController = MobileScannerController(
+      detectionSpeed: DetectionSpeed.normal,
+      facing: CameraFacing.back,
+      autoStart: false, // We'll start manually after permission check.
+    );
+
+    _checkCameraPermission();
+  }
 
   @override
   void dispose() {
-    _amountController.dispose();
+    WidgetsBinding.instance.removeObserver(this);
+    _scannerController.dispose();
     super.dispose();
   }
+
+  /// Re-check permission when user returns from Settings.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && !_cameraPermissionGranted) {
+      _checkCameraPermission();
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Permission Handling
+  // ---------------------------------------------------------------------------
+
+  Future<void> _checkCameraPermission() async {
+    final status = await Permission.camera.status;
+
+    if (status.isGranted) {
+      _onCameraPermissionGranted();
+      return;
+    }
+
+    if (status.isDenied) {
+      // First-time or previously denied (not permanently).
+      final result = await Permission.camera.request();
+      if (result.isGranted) {
+        _onCameraPermissionGranted();
+        return;
+      }
+    }
+
+    // Permanently denied or restricted — show manual guidance.
+    if (mounted) {
+      setState(() {
+        _cameraPermissionChecked = true;
+        _cameraPermissionGranted = false;
+      });
+    }
+  }
+
+  void _onCameraPermissionGranted() {
+    if (!mounted) return;
+    setState(() {
+      _cameraPermissionChecked = true;
+      _cameraPermissionGranted = true;
+    });
+    _scannerController.start();
+  }
+
+  Future<bool> _ensurePhotoPermission() async {
+    final status = await Permission.photos.status;
+
+    if (status.isGranted || status.isLimited) return true;
+
+    if (status.isDenied) {
+      final result = await Permission.photos.request();
+      if (result.isGranted || result.isLimited) return true;
+    }
+
+    // Permanently denied — guide user to Settings.
+    if (mounted) {
+      _showPermissionDeniedDialog(
+        title: 'Photo Library Access Required',
+        message:
+            'Please enable photo library access in Settings to upload QR code images.',
+      );
+    }
+    return false;
+  }
+
+  void _showPermissionDeniedDialog({
+    required String title,
+    required String message,
+  }) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: LignColors.secondaryBackground,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
+          title,
+          style: GoogleFonts.inter(
+            color: LignColors.textPrimary,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        content: Text(
+          message,
+          style: GoogleFonts.inter(color: LignColors.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(
+              'Cancel',
+              style: GoogleFonts.inter(color: LignColors.textSecondary),
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              openAppSettings();
+            },
+            child: Text(
+              'Open Settings',
+              style: GoogleFonts.inter(
+                color: LignColors.electricLime,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // QR Processing
+  // ---------------------------------------------------------------------------
+
+  Future<void> _onBarcodeDetected(BarcodeCapture capture) async {
+    if (_isProcessing) return;
+
+    final barcodes = capture.barcodes;
+    if (barcodes.isEmpty) return;
+
+    final rawValue = barcodes.first.rawValue;
+    if (rawValue == null || rawValue.trim().isEmpty) return;
+
+    setState(() => _isProcessing = true);
+    _scannerController.stop();
+
+    await _processQrContent(rawValue);
+  }
+
+  Future<void> _onGalleryPick() async {
+    if (_isProcessing) return;
+
+    // Check photo library permission explicitly.
+    final hasPermission = await _ensurePhotoPermission();
+    if (!hasPermission) return;
+
+    final pickedFile = await _imagePicker.pickImage(
+      source: ImageSource.gallery,
+    );
+    if (pickedFile == null) return;
+
+    setState(() => _isProcessing = true);
+
+    // Stop the live camera to avoid resource contention.
+    if (_cameraPermissionGranted) _scannerController.stop();
+
+    // Use MLKit directly — more reliable than MobileScannerController.analyzeImage().
+    final barcodeScanner = mlkit.BarcodeScanner(
+      formats: [mlkit.BarcodeFormat.qrCode],
+    );
+
+    try {
+      final inputImage = mlkit.InputImage.fromFilePath(pickedFile.path);
+      final barcodes = await barcodeScanner.processImage(inputImage);
+
+      if (!mounted) return;
+
+      if (barcodes.isEmpty) {
+        _showError('Could not decode QR code from the selected image.');
+        _resetAfterError();
+        return;
+      }
+
+      final rawValue = barcodes.first.rawValue;
+      if (rawValue == null || rawValue.trim().isEmpty) {
+        _showError('QR code content is empty.');
+        _resetAfterError();
+        return;
+      }
+
+      await _processQrContent(rawValue);
+    } catch (e) {
+      if (mounted) {
+        _showError('Failed to analyze QR image. Please try again.');
+        _resetAfterError();
+      }
+    } finally {
+      barcodeScanner.close();
+    }
+  }
+
+  void _resetAfterError() {
+    setState(() => _isProcessing = false);
+    if (_cameraPermissionGranted) _scannerController.start();
+  }
+
+  Future<void> _processQrContent(String content) async {
+    final viewModel = ref.read(qrisViewModelProvider.notifier);
+    final success = await viewModel.onQrScanned(content);
+
+    if (!mounted) return;
+
+    if (success) {
+      context.push('/qris/confirm');
+      setState(() => _isProcessing = false);
+      if (_cameraPermissionGranted) _scannerController.start();
+    } else {
+      final errorMessage = ref.read(qrisViewModelProvider).errorMessage;
+      _showError(errorMessage ?? 'Failed to process QR code.');
+      setState(() => _isProcessing = false);
+      if (_cameraPermissionGranted) _scannerController.start();
+    }
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: LignColors.error,
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Build
+  // ---------------------------------------------------------------------------
 
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(qrisViewModelProvider);
-    final viewModel = ref.read(qrisViewModelProvider.notifier);
 
     return Scaffold(
-      appBar: state.step != QRISStep.scan
-          ? AppBar(
-              title: const Text('QRIS Payment'),
-              backgroundColor: LignColors.primaryBackground,
-              foregroundColor: LignColors.textPrimary,
-              elevation: 0,
-              leading: state.step == QRISStep.success
-                  ? null
-                  : IconButton(
-                      icon: const Icon(Icons.arrow_back),
-                      onPressed: () {
-                        if (state.step == QRISStep.review) {
-                          viewModel.backToInput();
-                        } else {
-                          context.go('/home');
-                        }
-                      },
-                    ),
+      backgroundColor: Colors.black,
+      body: Stack(
+        children: [
+          // Camera preview or permission state
+          if (_cameraPermissionGranted)
+            MobileScanner(
+              controller: _scannerController,
+              onDetect: _onBarcodeDetected,
+              errorBuilder: (context, error, child) =>
+                  _buildCameraError(error),
             )
-          : null,
-      body: _buildBody(state, viewModel),
-    );
-  }
-
-  Widget _buildBody(QRISState state, QRISViewModel viewModel) {
-    switch (state.step) {
-      case QRISStep.scan:
-        return _buildScanStep();
-      case QRISStep.input:
-        return _buildInputStep(state, viewModel);
-      case QRISStep.review:
-        return _buildReviewStep(state, viewModel);
-      case QRISStep.success:
-        return _buildSuccessStep(state);
-    }
-  }
-
-  Widget _buildScanStep() {
-    return Stack(
-      children: [
-        Container(
-          width: double.infinity,
-          height: double.infinity,
-          color: Colors.black,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                width: 240,
-                height: 240,
-                decoration: BoxDecoration(
-                  border: Border.all(color: LignColors.electricLime, width: 3),
-                  borderRadius: BorderRadius.circular(24),
-                ),
-                child: const Icon(Icons.qr_code_scanner,
-                    color: Colors.white, size: 80),
+          else if (_cameraPermissionChecked)
+            _buildPermissionDeniedView()
+          else
+            const Center(
+              child: CircularProgressIndicator(
+                color: LignColors.electricLime,
               ),
-              const SizedBox(height: 32),
-              Text(
-                'Scanning QR Code...',
-                style: GoogleFonts.inter(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Point your camera at a QRIS code',
-                style: GoogleFonts.inter(
-                  color: Colors.white54,
-                  fontSize: 14,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildInputStep(QRISState state, QRISViewModel viewModel) {
-    return Padding(
-      padding: const EdgeInsets.all(24.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildMerchantInfo(state),
-          const SizedBox(height: 12),
-
-          // Remaining limit info
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: LignColors.electricLime.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
             ),
-            child: Row(
-              children: [
-                const Icon(Icons.account_balance_wallet_outlined,
-                    size: 16, color: LignColors.textSecondary),
-                const SizedBox(width: 8),
-                Text(
-                  'Remaining limit: ${CurrencyFormatter.format(state.remainingLimit)}',
-                  style: GoogleFonts.inter(
-                    fontSize: 12,
-                    color: LignColors.textPrimary,
-                    fontWeight: FontWeight.w500,
-                  ),
+
+          // Dark overlay with transparent scan window
+          if (_cameraPermissionGranted) _buildScanOverlay(),
+
+          // Top bar
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
                 ),
-              ],
+                child: Row(
+                  children: [
+                    IconButton(
+                      onPressed: () => context.go('/home'),
+                      icon: const Icon(
+                        Icons.arrow_back,
+                        color: Colors.white,
+                        size: 28,
+                      ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      'Scan QRIS',
+                      style: GoogleFonts.inter(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const Spacer(),
+                    // Torch toggle — only when camera is active
+                    if (_cameraPermissionGranted)
+                      IconButton(
+                        onPressed: () => _scannerController.toggleTorch(),
+                        icon: ValueListenableBuilder<MobileScannerState>(
+                          valueListenable: _scannerController,
+                          builder: (context, scannerState, _) {
+                            return Icon(
+                              scannerState.torchState == TorchState.on
+                                  ? Icons.flash_on
+                                  : Icons.flash_off,
+                              color: Colors.white,
+                              size: 28,
+                            );
+                          },
+                        ),
+                      )
+                    else
+                      const SizedBox(width: 48),
+                  ],
+                ),
+              ),
             ),
           ),
-          const SizedBox(height: 32),
 
-          LignTextInput(
-            label: 'Amount',
-            controller: _amountController,
-            keyboardType: TextInputType.number,
-            hintText: '0',
-            prefixIcon: const Padding(
-              padding: EdgeInsets.all(12.0),
-              child: Text('Rp',
-                  style:
-                      TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          // Bottom controls
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (_cameraPermissionGranted)
+                      Text(
+                        'Point your camera at a QRIS code',
+                        style: GoogleFonts.inter(
+                          color: Colors.white70,
+                          fontSize: 14,
+                        ),
+                      ),
+                    const SizedBox(height: 20),
+
+                    // Gallery upload button
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: state.isLoading ? null : _onGalleryPick,
+                        icon: const Icon(Icons.photo_library_outlined),
+                        label: const Text('Upload from Gallery'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          side: const BorderSide(color: Colors.white38),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
-            errorText: state.errorMessage,
-            onChanged: (val) => viewModel.setAmount(val),
           ),
-          const Spacer(),
-          LignButton(
-            text: 'Continue',
-            onPressed:
-                state.errorMessage == null && state.amount > 0
-                    ? viewModel.proceedToReview
-                    : null,
-          ),
+
+          // Loading overlay
+          if (state.isLoading)
+            Container(
+              color: Colors.black54,
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const CircularProgressIndicator(
+                      color: LignColors.electricLime,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Processing QR code...',
+                      style: GoogleFonts.inter(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
         ],
       ),
     );
   }
 
-  Widget _buildReviewStep(QRISState state, QRISViewModel viewModel) {
-    final formattedAmount = CurrencyFormatter.format(state.amount);
+  // ---------------------------------------------------------------------------
+  // Sub-widgets
+  // ---------------------------------------------------------------------------
 
-    return Padding(
-      padding: const EdgeInsets.all(24.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Review Payment',
-              style: Theme.of(context).textTheme.headlineSmall),
-          const SizedBox(height: 24),
-          _buildMerchantInfo(state),
-          const SizedBox(height: 32),
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: LignColors.secondaryBackground,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: LignColors.border),
-            ),
-            child: Column(
-              children: [
-                _buildReviewRow('Amount', formattedAmount),
-                const SizedBox(height: 12),
-                _buildReviewRow('Admin Fee', 'Rp 0'),
-                const Divider(height: 24),
-                _buildReviewRow(
-                  'Total',
-                  formattedAmount,
-                  isBold: true,
-                  color: LignColors.textPrimary,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 24),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: state.needsApproval
-                  ? LignColors.warning.withValues(alpha: 0.1)
-                  : LignColors.electricLime.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: state.needsApproval
-                    ? LignColors.warning
-                    : LignColors.electricLime,
-              ),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  state.needsApproval ? Icons.schedule : Icons.check_circle,
-                  color: state.needsApproval ? LignColors.warning : Colors.green,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    state.needsApproval
-                        ? 'Requires approval: Amount > Rp 1.000.000. Status will be Pending.'
-                        : 'Policy Check Passed: Within limit and allowed category.',
-                    style: const TextStyle(fontSize: 12),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const Spacer(),
-          LignButton(
-            text: state.needsApproval ? 'Submit for Approval' : 'Confirm & Pay',
-            isLoading: state.isLoading,
-            onPressed: viewModel.processPayment,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSuccessStep(QRISState state) {
-    final formattedAmount = CurrencyFormatter.format(state.amount);
-
+  /// Shown when camera permission is permanently denied.
+  Widget _buildPermissionDeniedView() {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(32.0),
+        padding: const EdgeInsets.all(32),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              state.needsApproval ? Icons.schedule : Icons.check_circle,
-              color: state.needsApproval
-                  ? LignColors.warning
-                  : LignColors.electricLime,
-              size: 80,
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: const Icon(
+                Icons.camera_alt_outlined,
+                color: Colors.white38,
+                size: 40,
+              ),
             ),
             const SizedBox(height: 24),
             Text(
-              state.needsApproval ? 'Payment Submitted' : 'Payment Successful',
-              style: Theme.of(context).textTheme.headlineSmall,
+              'Camera Access Required',
+              style: GoogleFonts.inter(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.w600,
+              ),
             ),
-            const SizedBox(height: 8),
-            Text(formattedAmount,
-                style: GoogleFonts.inter(
-                    fontSize: 32, fontWeight: FontWeight.bold)),
             const SizedBox(height: 12),
-            Text('To ${state.merchantName}',
-                style: const TextStyle(color: LignColors.textSecondary)),
-            if (state.needsApproval) ...[
-              const SizedBox(height: 12),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: LignColors.warning.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(8),
+            Text(
+              'Camera permission was denied. Please enable it in '
+              'your device settings to scan QR codes.',
+              style: GoogleFonts.inter(color: Colors.white54, fontSize: 14),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 28),
+            ElevatedButton.icon(
+              onPressed: () => openAppSettings(),
+              icon: const Icon(Icons.settings_outlined),
+              label: const Text('Open Settings'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: LignColors.electricLime,
+                foregroundColor: Colors.black,
+                padding: const EdgeInsets.symmetric(
+                  vertical: 14,
+                  horizontal: 24,
                 ),
-                child: Text(
-                  'Status: Pending Approval',
-                  style: GoogleFonts.inter(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: const Color(0xFFB8860B),
-                  ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                textStyle: GoogleFonts.inter(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
-            ],
-            const SizedBox(height: 48),
-            LignButton(
-              text: 'Done',
-              onPressed: () {
-                context.go('/home');
-              },
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Or use the gallery upload below',
+              style: GoogleFonts.inter(
+                color: Colors.white38,
+                fontSize: 13,
+              ),
+              textAlign: TextAlign.center,
             ),
           ],
         ),
@@ -311,50 +517,98 @@ class _QRISScreenState extends ConsumerState<QRISScreen> {
     );
   }
 
-  Widget _buildMerchantInfo(QRISState state) {
-    return Row(
-      children: [
-        Container(
-          width: 50,
-          height: 50,
-          decoration: BoxDecoration(
-            color: LignColors.secondaryBackground,
-            shape: BoxShape.circle,
-            border: Border.all(color: LignColors.border),
-          ),
-          child: const Icon(Icons.store, color: LignColors.textSecondary),
-        ),
-        const SizedBox(width: 16),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildScanOverlay() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const scanAreaSize = 260.0;
+        final left = (constraints.maxWidth - scanAreaSize) / 2;
+        final top = (constraints.maxHeight - scanAreaSize) / 2 - 40;
+
+        return Stack(
           children: [
-            Text(state.merchantName,
-                style: GoogleFonts.inter(
-                    fontWeight: FontWeight.bold, fontSize: 16)),
-            Text(state.merchantCategory,
-                style: const TextStyle(color: LignColors.textSecondary)),
+            // Semi-transparent dark overlay
+            ColorFiltered(
+              colorFilter: const ColorFilter.mode(
+                Colors.black54,
+                BlendMode.srcOut,
+              ),
+              child: Stack(
+                children: [
+                  Container(
+                    decoration: const BoxDecoration(
+                      color: Colors.black,
+                      backgroundBlendMode: BlendMode.dstOut,
+                    ),
+                  ),
+                  Positioned(
+                    left: left,
+                    top: top,
+                    child: Container(
+                      width: scanAreaSize,
+                      height: scanAreaSize,
+                      decoration: BoxDecoration(
+                        color: Colors.red, // Any color — will be cut out
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Scan frame border
+            Positioned(
+              left: left,
+              top: top,
+              child: Container(
+                width: scanAreaSize,
+                height: scanAreaSize,
+                decoration: BoxDecoration(
+                  border: Border.all(
+                    color: LignColors.electricLime,
+                    width: 3,
+                  ),
+                  borderRadius: BorderRadius.circular(24),
+                ),
+              ),
+            ),
           ],
-        ),
-      ],
+        );
+      },
     );
   }
 
-  Widget _buildReviewRow(String label, String value,
-      {bool isBold = false, Color? color}) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(label,
-            style: const TextStyle(color: LignColors.textSecondary)),
-        Text(
-          value,
-          style: TextStyle(
-            fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
-            color: color ?? LignColors.textPrimary,
-            fontSize: isBold ? 16 : 14,
-          ),
+  Widget _buildCameraError(MobileScannerException error) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.camera_alt_outlined,
+              color: Colors.white38,
+              size: 64,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Camera Error',
+              style: GoogleFonts.inter(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'An error occurred while accessing the camera. '
+              'You can still upload a QR image from your gallery.',
+              style: GoogleFonts.inter(color: Colors.white54, fontSize: 14),
+              textAlign: TextAlign.center,
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }
