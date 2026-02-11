@@ -42,7 +42,7 @@ class AuthViewModel extends Notifier<AuthState> {
     await Future.delayed(const Duration(seconds: 1));
     state = state.copyWith(
       isLoading: false,
-      user: const User(id: 'u1', name: 'User', email: 'user@lign.com'),
+      user: User(id: 'u1', name: email, email: '$email@lign.com'),
     );
   }
 

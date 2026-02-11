@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lign_financial/features/auth/domain/user.dart';
-// import 'package:lign_financial/features/auth/domain/app_mode.dart'; // If needed for logic
+import 'package:lign_financial/features/auth/viewmodel/auth_viewmodel.dart';
 
 class ProfileState {
   final bool isLoading;
@@ -33,26 +33,17 @@ class ProfileState {
 class ProfileViewModel extends Notifier<ProfileState> {
   @override
   ProfileState build() {
-    Future.microtask(() => loadProfile());
-    return const ProfileState(isLoading: true);
-  }
-
-  Future<void> loadProfile() async {
-    state = state.copyWith(isLoading: true);
-    // Simulate API call
-    await Future.delayed(const Duration(milliseconds: 500));
-    
-    // Mock Data (Consistent with Home)
-    state = state.copyWith(
+    final authState = ref.watch(authViewModelProvider);
+    return ProfileState(
       isLoading: false,
-      user: const User(id: 'u1', name: 'User', email: 'user@lign.com'), // Using mocked User
-      isFinanceMode: false, // Default or fetch from shared pref/global state
+      user: authState.user,
+      isFinanceMode: false,
     );
   }
 
   Future<void> logout() async {
-     // Clear session logic here
-     state = const ProfileState(); // Reset
+    await ref.read(authViewModelProvider.notifier).logout();
+    state = const ProfileState();
   }
 }
 

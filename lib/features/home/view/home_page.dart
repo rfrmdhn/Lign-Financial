@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:lign_financial/core/constants/app_strings.dart';
 import 'package:lign_financial/core/themes/app_colors.dart';
 import 'package:lign_financial/features/auth/domain/app_mode.dart';
+import 'package:lign_financial/features/auth/viewmodel/auth_viewmodel.dart';
 // import 'package:lign_financial/features/auth/presentation/auth_controller.dart'; 
 import 'package:lign_financial/features/home/view/content/finance_home_content.dart';
 import 'package:lign_financial/features/home/view/content/employee_home_content.dart';
@@ -18,9 +19,8 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(homeViewModelProvider);
     final viewModel = ref.read(homeViewModelProvider.notifier);
-    
-    // final userName = authState.user?.name ?? 'User'; // Temporarily mocked
-    const userName = 'User';
+    final authState = ref.watch(authViewModelProvider);
+    final userName = authState.user?.name ?? 'User';
     final isFinanceMode = state.currentMode == AppMode.finance;
 
     return Scaffold(
